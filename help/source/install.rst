@@ -56,7 +56,7 @@ Execução do pacote no ambiente Jupyter no Python.
 
 .. code-block:: shell
 
-    (eocube) $ jupyter-notebook
+    (eocube) $ jupyter notebook
 
 Instalação das Dependências
 ---------------------------

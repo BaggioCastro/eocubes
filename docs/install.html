@@ -13,6 +13,8 @@
   
   <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
   <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
   <link rel="stylesheet" href="_static/copybutton.css" type="text/css" />
 
   
@@ -33,10 +35,10 @@
   
     
       <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
         <script src="_static/jquery.js"></script>
         <script src="_static/underscore.js"></script>
         <script src="_static/doctools.js"></script>
-        <script src="_static/language_data.js"></script>
         <script src="_static/clipboard.min.js"></script>
         <script src="_static/copybutton.js"></script>
     
@@ -224,7 +226,7 @@
 <div class="section" id="execucao">
 <h2>Execução<a class="headerlink" href="#execucao" title="Permalink to this headline">¶</a></h2>
 <p>Execução do pacote no ambiente Jupyter no Python.</p>
-<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span><span class="o">(</span>eocube<span class="o">)</span> $ jupyter-notebook
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span><span class="o">(</span>eocube<span class="o">)</span> $ jupyter notebook
 </pre></div>
 </div>
 </div>
@@ -240,6 +242,7 @@
 </div>
 <p>Instalar as depências utilizando o arquivo [<cite>setup.py</cite>](./setup.py):</p>
 <div class="highlight-shell notranslate"><div class="highlight"><pre><span></span><span class="o">(</span>eocube<span class="o">)</span> ~/eocube $ python -m pip install -e .<span class="o">[</span>all<span class="o">]</span>
+<span class="o">(</span>eocube<span class="o">)</span> ~/home $ python -m pip install git+https://github.com/AbnerErnaniADSFatec/eocubes
 </pre></div>
 </div>
 </div>
