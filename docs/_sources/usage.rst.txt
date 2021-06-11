@@ -1,0 +1,1013 @@
+..
+    This file is part of Python Client Library for Earth Observation Data Cube.
+    Copyright (C) 2021 None.
+
+    Python Client Library for Earth Observation Data Cube is free software;
+    You can redistribute it and/or modify it under the terms of the MIT License;
+    See LICENSE file for more details.
+
+=====
+Usage
+=====
+
+.. code:: python
+
+    import datetime
+    import json
+    import warnings
+
+    import numpy as np
+    import rasterio
+    import requests
+    import stac
+    import wtss
+    import xarray as xr
+    from pyproj import CRS, Proj, transform
+    from rasterio.windows import Window
+
+    import pandas as pd
+    import matplotlib as mpl
+    import matplotlib.pyplot as plt
+    %matplotlib inline
+
+    from eocube import DataCube, config
+
+    warnings.filterwarnings("ignore")
+
+    config.ACCESS_TOKEN = "a6gB61oddyHxMAZ08y098ynEq0s1hQ3siDZao245CV"
+
+.. code:: python
+
+    # bbox = [-56.5009689, -10.7164420, -56.3526535, -10.8238641] # Mato Grosso
+    # bbox = [-46.01348876953125, -23.08478515994374, -45.703125, -23.34856015148709] # Interior de SP São José
+    # bbox = [-64.0988088, -8.7845055, -64.0905046, -8.7918638] # Mato Grosso
+    # bbox = [-64.2322540, -8.5769474, -63.7756348, -8.824010]
+    bbox = [-63.9624023, -8.6760635, -63.8573456, -8.7588666]
+
+    eocube_service = DataCube(
+        collections=["CB4_64_16D_STK-1"],
+        query_bands=['red','green', 'blue'],
+        bbox=bbox,
+        start_date="2018-08-01",
+        end_date="2019-07-31"
+    )
+
+.. code:: python
+
+    data = eocube_service.getDataCube()
+    data
+
+
+
+
+.. raw:: html
+
+    <div><svg style="position: absolute; width: 0; height: 0; overflow: hidden">
+    <defs>
+    <symbol id="icon-database" viewBox="0 0 32 32">
+    <path d="M16 0c-8.837 0-16 2.239-16 5v4c0 2.761 7.163 5 16 5s16-2.239 16-5v-4c0-2.761-7.163-5-16-5z"></path>
+    <path d="M16 17c-8.837 0-16-2.239-16-5v6c0 2.761 7.163 5 16 5s16-2.239 16-5v-6c0 2.761-7.163 5-16 5z"></path>
+    <path d="M16 26c-8.837 0-16-2.239-16-5v6c0 2.761 7.163 5 16 5s16-2.239 16-5v-6c0 2.761-7.163 5-16 5z"></path>
+    </symbol>
+    <symbol id="icon-file-text2" viewBox="0 0 32 32">
+    <path d="M28.681 7.159c-0.694-0.947-1.662-2.053-2.724-3.116s-2.169-2.030-3.116-2.724c-1.612-1.182-2.393-1.319-2.841-1.319h-15.5c-1.378 0-2.5 1.121-2.5 2.5v27c0 1.378 1.122 2.5 2.5 2.5h23c1.378 0 2.5-1.122 2.5-2.5v-19.5c0-0.448-0.137-1.23-1.319-2.841zM24.543 5.457c0.959 0.959 1.712 1.825 2.268 2.543h-4.811v-4.811c0.718 0.556 1.584 1.309 2.543 2.268zM28 29.5c0 0.271-0.229 0.5-0.5 0.5h-23c-0.271 0-0.5-0.229-0.5-0.5v-27c0-0.271 0.229-0.5 0.5-0.5 0 0 15.499-0 15.5 0v7c0 0.552 0.448 1 1 1h7v19.5z"></path>
+    <path d="M23 26h-14c-0.552 0-1-0.448-1-1s0.448-1 1-1h14c0.552 0 1 0.448 1 1s-0.448 1-1 1z"></path>
+    <path d="M23 22h-14c-0.552 0-1-0.448-1-1s0.448-1 1-1h14c0.552 0 1 0.448 1 1s-0.448 1-1 1z"></path>
+    <path d="M23 18h-14c-0.552 0-1-0.448-1-1s0.448-1 1-1h14c0.552 0 1 0.448 1 1s-0.448 1-1 1z"></path>
+    </symbol>
+    </defs>
+    </svg>
+    <style>/* CSS stylesheet for displaying xarray objects in jupyterlab.
+     *
+     */
+
+    :root {
+      --xr-font-color0: var(--jp-content-font-color0, rgba(0, 0, 0, 1));
+      --xr-font-color2: var(--jp-content-font-color2, rgba(0, 0, 0, 0.54));
+      --xr-font-color3: var(--jp-content-font-color3, rgba(0, 0, 0, 0.38));
+      --xr-border-color: var(--jp-border-color2, #e0e0e0);
+      --xr-disabled-color: var(--jp-layout-color3, #bdbdbd);
+      --xr-background-color: var(--jp-layout-color0, white);
+      --xr-background-color-row-even: var(--jp-layout-color1, white);
+      --xr-background-color-row-odd: var(--jp-layout-color2, #eeeeee);
+    }
+
+    html[theme=dark],
+    body.vscode-dark {
+      --xr-font-color0: rgba(255, 255, 255, 1);
+      --xr-font-color2: rgba(255, 255, 255, 0.54);
+      --xr-font-color3: rgba(255, 255, 255, 0.38);
+      --xr-border-color: #1F1F1F;
+      --xr-disabled-color: #515151;
+      --xr-background-color: #111111;
+      --xr-background-color-row-even: #111111;
+      --xr-background-color-row-odd: #313131;
+    }
+
+    .xr-wrap {
+      display: block;
+      min-width: 300px;
+      max-width: 700px;
+    }
+
+    .xr-text-repr-fallback {
+      /* fallback to plain text repr when CSS is not injected (untrusted notebook) */
+      display: none;
+    }
+
+    .xr-header {
+      padding-top: 6px;
+      padding-bottom: 6px;
+      margin-bottom: 4px;
+      border-bottom: solid 1px var(--xr-border-color);
+    }
+
+    .xr-header > div,
+    .xr-header > ul {
+      display: inline;
+      margin-top: 0;
+      margin-bottom: 0;
+    }
+
+    .xr-obj-type,
+    .xr-array-name {
+      margin-left: 2px;
+      margin-right: 10px;
+    }
+
+    .xr-obj-type {
+      color: var(--xr-font-color2);
+    }
+
+    .xr-sections {
+      padding-left: 0 !important;
+      display: grid;
+      grid-template-columns: 150px auto auto 1fr 20px 20px;
+    }
+
+    .xr-section-item {
+      display: contents;
+    }
+
+    .xr-section-item input {
+      display: none;
+    }
+
+    .xr-section-item input + label {
+      color: var(--xr-disabled-color);
+    }
+
+    .xr-section-item input:enabled + label {
+      cursor: pointer;
+      color: var(--xr-font-color2);
+    }
+
+    .xr-section-item input:enabled + label:hover {
+      color: var(--xr-font-color0);
+    }
+
+    .xr-section-summary {
+      grid-column: 1;
+      color: var(--xr-font-color2);
+      font-weight: 500;
+    }
+
+    .xr-section-summary > span {
+      display: inline-block;
+      padding-left: 0.5em;
+    }
+
+    .xr-section-summary-in:disabled + label {
+      color: var(--xr-font-color2);
+    }
+
+    .xr-section-summary-in + label:before {
+      display: inline-block;
+      content: '►';
+      font-size: 11px;
+      width: 15px;
+      text-align: center;
+    }
+
+    .xr-section-summary-in:disabled + label:before {
+      color: var(--xr-disabled-color);
+    }
+
+    .xr-section-summary-in:checked + label:before {
+      content: '▼';
+    }
+
+    .xr-section-summary-in:checked + label > span {
+      display: none;
+    }
+
+    .xr-section-summary,
+    .xr-section-inline-details {
+      padding-top: 4px;
+      padding-bottom: 4px;
+    }
+
+    .xr-section-inline-details {
+      grid-column: 2 / -1;
+    }
+
+    .xr-section-details {
+      display: none;
+      grid-column: 1 / -1;
+      margin-bottom: 5px;
+    }
+
+    .xr-section-summary-in:checked ~ .xr-section-details {
+      display: contents;
+    }
+
+    .xr-array-wrap {
+      grid-column: 1 / -1;
+      display: grid;
+      grid-template-columns: 20px auto;
+    }
+
+    .xr-array-wrap > label {
+      grid-column: 1;
+      vertical-align: top;
+    }
+
+    .xr-preview {
+      color: var(--xr-font-color3);
+    }
+
+    .xr-array-preview,
+    .xr-array-data {
+      padding: 0 5px !important;
+      grid-column: 2;
+    }
+
+    .xr-array-data,
+    .xr-array-in:checked ~ .xr-array-preview {
+      display: none;
+    }
+
+    .xr-array-in:checked ~ .xr-array-data,
+    .xr-array-preview {
+      display: inline-block;
+    }
+
+    .xr-dim-list {
+      display: inline-block !important;
+      list-style: none;
+      padding: 0 !important;
+      margin: 0;
+    }
+
+    .xr-dim-list li {
+      display: inline-block;
+      padding: 0;
+      margin: 0;
+    }
+
+    .xr-dim-list:before {
+      content: '(';
+    }
+
+    .xr-dim-list:after {
+      content: ')';
+    }
+
+    .xr-dim-list li:not(:last-child):after {
+      content: ',';
+      padding-right: 5px;
+    }
+
+    .xr-has-index {
+      font-weight: bold;
+    }
+
+    .xr-var-list,
+    .xr-var-item {
+      display: contents;
+    }
+
+    .xr-var-item > div,
+    .xr-var-item label,
+    .xr-var-item > .xr-var-name span {
+      background-color: var(--xr-background-color-row-even);
+      margin-bottom: 0;
+    }
+
+    .xr-var-item > .xr-var-name:hover span {
+      padding-right: 5px;
+    }
+
+    .xr-var-list > li:nth-child(odd) > div,
+    .xr-var-list > li:nth-child(odd) > label,
+    .xr-var-list > li:nth-child(odd) > .xr-var-name span {
+      background-color: var(--xr-background-color-row-odd);
+    }
+
+    .xr-var-name {
+      grid-column: 1;
+    }
+
+    .xr-var-dims {
+      grid-column: 2;
+    }
+
+    .xr-var-dtype {
+      grid-column: 3;
+      text-align: right;
+      color: var(--xr-font-color2);
+    }
+
+    .xr-var-preview {
+      grid-column: 4;
+    }
+
+    .xr-var-name,
+    .xr-var-dims,
+    .xr-var-dtype,
+    .xr-preview,
+    .xr-attrs dt {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      padding-right: 10px;
+    }
+
+    .xr-var-name:hover,
+    .xr-var-dims:hover,
+    .xr-var-dtype:hover,
+    .xr-attrs dt:hover {
+      overflow: visible;
+      width: auto;
+      z-index: 1;
+    }
+
+    .xr-var-attrs,
+    .xr-var-data {
+      display: none;
+      background-color: var(--xr-background-color) !important;
+      padding-bottom: 5px !important;
+    }
+
+    .xr-var-attrs-in:checked ~ .xr-var-attrs,
+    .xr-var-data-in:checked ~ .xr-var-data {
+      display: block;
+    }
+
+    .xr-var-data > table {
+      float: right;
+    }
+
+    .xr-var-name span,
+    .xr-var-data,
+    .xr-attrs {
+      padding-left: 25px !important;
+    }
+
+    .xr-attrs,
+    .xr-var-attrs,
+    .xr-var-data {
+      grid-column: 1 / -1;
+    }
+
+    dl.xr-attrs {
+      padding: 0;
+      margin: 0;
+      display: grid;
+      grid-template-columns: 125px auto;
+    }
+
+    .xr-attrs dt,
+    .xr-attrs dd {
+      padding: 0;
+      margin: 0;
+      float: left;
+      padding-right: 10px;
+      width: auto;
+    }
+
+    .xr-attrs dt {
+      font-weight: normal;
+      grid-column: 1;
+    }
+
+    .xr-attrs dt:hover span {
+      display: inline-block;
+      background: var(--xr-background-color);
+      padding-right: 10px;
+    }
+
+    .xr-attrs dd {
+      grid-column: 2;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+
+    .xr-icon-database,
+    .xr-icon-file-text2 {
+      display: inline-block;
+      vertical-align: middle;
+      width: 1em;
+      height: 1.5em !important;
+      stroke-width: 0;
+      stroke: currentColor;
+      fill: currentColor;
+    }
+    </style><pre class='xr-text-repr-fallback'>&lt;xarray.DataArray (band: 3, time: 24, latitude: 151, longitude: 172)&gt;
+    array([[[[ 466,  464,  476, ...,  479,  491,  471],
+             [ 461,  464,  468, ...,  462,  489,  487],
+             [ 466,  488,  495, ...,  465,  457,  481],
+             ...,
+             [ 993, 1009, 1054, ..., 1363, 1382, 1336],
+             [1014, 1034, 1063, ..., 1370, 1384, 1401],
+             [ 873,  845,  983, ..., 1285, 1404, 1462]],
+
+            [[ 376,  357,  359, ...,  400,  386,  402],
+             [ 373,  346,  334, ...,  382,  381,  380],
+             [ 365,  347,  345, ...,  379,  375,  366],
+             ...,
+             [ 899,  921, 1059, ..., 1384, 1433, 1451],
+             [ 923,  990, 1090, ..., 1428, 1438, 1455],
+             [ 819,  857,  948, ..., 1432, 1414, 1443]],
+
+            [[1129, 1140, 1129, ..., 1053, 1040, 1024],
+             [1125, 1132, 1132, ..., 1058, 1055, 1053],
+             [1122, 1130, 1126, ..., 1051, 1044, 1057],
+             ...,
+    ...
+             ...,
+             [ 460,  438,  470, ...,  816,  761,  802],
+             [ 446,  463,  471, ...,  821,  811,  901],
+             [ 430,  426,  416, ...,  817,  771,  816]],
+
+            [[ 383,  397,  362, ...,  312,  316,  325],
+             [ 386,  388,  373, ...,  295,  311,  319],
+             [ 395,  396,  387, ...,  292,  329,  337],
+             ...,
+             [ 520,  537,  536, ...,  877,  840,  933],
+             [ 509,  511,  529, ...,  841,  904,  824],
+             [ 496,  501,  515, ...,  849,  853,  862]],
+
+            [[ 364,  366,  386, ...,  372,  365,  373],
+             [ 364,  377,  385, ...,  357,  366,  354],
+             [ 350,  350,  357, ...,  380,  359,  348],
+             ...,
+             [ 522,  543,  561, ...,  897,  869,  887],
+             [ 527,  549,  559, ...,  831,  895,  902],
+             [ 463,  482, 1160, ...,  931,  952,  891]]]], dtype=int16)
+    Coordinates:
+      * band       (band) &lt;U5 &#x27;red&#x27; &#x27;green&#x27; &#x27;blue&#x27;
+      * time       (time) datetime64[ns] 2018-07-28 2018-08-13 ... 2019-07-28
+      * latitude   (latitude) int64 0 1 2 3 4 5 6 7 ... 144 145 146 147 148 149 150
+      * longitude  (longitude) int64 0 1 2 3 4 5 6 7 ... 165 166 167 168 169 170 171
+    Attributes:
+        CB4_64_16D_STK-1:  {&#x27;id&#x27;: &#x27;CB4_64_16D_STK-1&#x27;, &#x27;title&#x27;: &#x27;CBERS-4 - AWFI - ...</pre><div class='xr-wrap' hidden><div class='xr-header'><div class='xr-obj-type'>xarray.DataArray</div><div class='xr-array-name'></div><ul class='xr-dim-list'><li><span class='xr-has-index'>band</span>: 3</li><li><span class='xr-has-index'>time</span>: 24</li><li><span class='xr-has-index'>latitude</span>: 151</li><li><span class='xr-has-index'>longitude</span>: 172</li></ul></div><ul class='xr-sections'><li class='xr-section-item'><div class='xr-array-wrap'><input id='section-98865769-ca03-4eb8-8d28-b4e0c8bdd0c5' class='xr-array-in' type='checkbox' checked><label for='section-98865769-ca03-4eb8-8d28-b4e0c8bdd0c5' title='Show/hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-array-preview xr-preview'><span>466 464 476 496 510 597 848 954 ... 861 957 993 926 885 931 952 891</span></div><div class='xr-array-data'><pre>array([[[[ 466,  464,  476, ...,  479,  491,  471],
+             [ 461,  464,  468, ...,  462,  489,  487],
+             [ 466,  488,  495, ...,  465,  457,  481],
+             ...,
+             [ 993, 1009, 1054, ..., 1363, 1382, 1336],
+             [1014, 1034, 1063, ..., 1370, 1384, 1401],
+             [ 873,  845,  983, ..., 1285, 1404, 1462]],
+
+            [[ 376,  357,  359, ...,  400,  386,  402],
+             [ 373,  346,  334, ...,  382,  381,  380],
+             [ 365,  347,  345, ...,  379,  375,  366],
+             ...,
+             [ 899,  921, 1059, ..., 1384, 1433, 1451],
+             [ 923,  990, 1090, ..., 1428, 1438, 1455],
+             [ 819,  857,  948, ..., 1432, 1414, 1443]],
+
+            [[1129, 1140, 1129, ..., 1053, 1040, 1024],
+             [1125, 1132, 1132, ..., 1058, 1055, 1053],
+             [1122, 1130, 1126, ..., 1051, 1044, 1057],
+             ...,
+    ...
+             ...,
+             [ 460,  438,  470, ...,  816,  761,  802],
+             [ 446,  463,  471, ...,  821,  811,  901],
+             [ 430,  426,  416, ...,  817,  771,  816]],
+
+            [[ 383,  397,  362, ...,  312,  316,  325],
+             [ 386,  388,  373, ...,  295,  311,  319],
+             [ 395,  396,  387, ...,  292,  329,  337],
+             ...,
+             [ 520,  537,  536, ...,  877,  840,  933],
+             [ 509,  511,  529, ...,  841,  904,  824],
+             [ 496,  501,  515, ...,  849,  853,  862]],
+
+            [[ 364,  366,  386, ...,  372,  365,  373],
+             [ 364,  377,  385, ...,  357,  366,  354],
+             [ 350,  350,  357, ...,  380,  359,  348],
+             ...,
+             [ 522,  543,  561, ...,  897,  869,  887],
+             [ 527,  549,  559, ...,  831,  895,  902],
+             [ 463,  482, 1160, ...,  931,  952,  891]]]], dtype=int16)</pre></div></div></li><li class='xr-section-item'><input id='section-e3e6a2e5-8663-43a3-b1df-d3935d090662' class='xr-section-summary-in' type='checkbox'  checked><label for='section-e3e6a2e5-8663-43a3-b1df-d3935d090662' class='xr-section-summary' >Coordinates: <span>(4)</span></label><div class='xr-section-inline-details'></div><div class='xr-section-details'><ul class='xr-var-list'><li class='xr-var-item'><div class='xr-var-name'><span class='xr-has-index'>band</span></div><div class='xr-var-dims'>(band)</div><div class='xr-var-dtype'>&lt;U5</div><div class='xr-var-preview xr-preview'>&#x27;red&#x27; &#x27;green&#x27; &#x27;blue&#x27;</div><input id='attrs-a19585fd-8419-4890-9ed6-6236de0fc9d2' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-a19585fd-8419-4890-9ed6-6236de0fc9d2' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-5caa50af-d647-4e7f-8f44-f5e3e3f412b7' class='xr-var-data-in' type='checkbox'><label for='data-5caa50af-d647-4e7f-8f44-f5e3e3f412b7' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([&#x27;red&#x27;, &#x27;green&#x27;, &#x27;blue&#x27;], dtype=&#x27;&lt;U5&#x27;)</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span class='xr-has-index'>time</span></div><div class='xr-var-dims'>(time)</div><div class='xr-var-dtype'>datetime64[ns]</div><div class='xr-var-preview xr-preview'>2018-07-28 ... 2019-07-28</div><input id='attrs-9975078f-127c-4a2e-a800-66a468a4277e' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-9975078f-127c-4a2e-a800-66a468a4277e' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-dfde8e35-91a7-4892-8b6b-55a889dda39e' class='xr-var-data-in' type='checkbox'><label for='data-dfde8e35-91a7-4892-8b6b-55a889dda39e' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([&#x27;2018-07-28T00:00:00.000000000&#x27;, &#x27;2018-08-13T00:00:00.000000000&#x27;,
+           &#x27;2018-08-29T00:00:00.000000000&#x27;, &#x27;2018-09-14T00:00:00.000000000&#x27;,
+           &#x27;2018-09-30T00:00:00.000000000&#x27;, &#x27;2018-10-16T00:00:00.000000000&#x27;,
+           &#x27;2018-11-01T00:00:00.000000000&#x27;, &#x27;2018-11-17T00:00:00.000000000&#x27;,
+           &#x27;2018-12-03T00:00:00.000000000&#x27;, &#x27;2018-12-19T00:00:00.000000000&#x27;,
+           &#x27;2019-01-01T00:00:00.000000000&#x27;, &#x27;2019-01-17T00:00:00.000000000&#x27;,
+           &#x27;2019-02-02T00:00:00.000000000&#x27;, &#x27;2019-02-18T00:00:00.000000000&#x27;,
+           &#x27;2019-03-06T00:00:00.000000000&#x27;, &#x27;2019-03-22T00:00:00.000000000&#x27;,
+           &#x27;2019-04-07T00:00:00.000000000&#x27;, &#x27;2019-04-23T00:00:00.000000000&#x27;,
+           &#x27;2019-05-09T00:00:00.000000000&#x27;, &#x27;2019-05-25T00:00:00.000000000&#x27;,
+           &#x27;2019-06-10T00:00:00.000000000&#x27;, &#x27;2019-06-26T00:00:00.000000000&#x27;,
+           &#x27;2019-07-12T00:00:00.000000000&#x27;, &#x27;2019-07-28T00:00:00.000000000&#x27;],
+          dtype=&#x27;datetime64[ns]&#x27;)</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span class='xr-has-index'>latitude</span></div><div class='xr-var-dims'>(latitude)</div><div class='xr-var-dtype'>int64</div><div class='xr-var-preview xr-preview'>0 1 2 3 4 5 ... 146 147 148 149 150</div><input id='attrs-1e5b0f88-a782-4e1d-a2ab-833fd6e61a01' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-1e5b0f88-a782-4e1d-a2ab-833fd6e61a01' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-bc5ae956-cef3-4ac4-9035-3c47fe3be4b9' class='xr-var-data-in' type='checkbox'><label for='data-bc5ae956-cef3-4ac4-9035-3c47fe3be4b9' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([  0,   1,   2,   3,   4,   5,   6,   7,   8,   9,  10,  11,  12,  13,
+            14,  15,  16,  17,  18,  19,  20,  21,  22,  23,  24,  25,  26,  27,
+            28,  29,  30,  31,  32,  33,  34,  35,  36,  37,  38,  39,  40,  41,
+            42,  43,  44,  45,  46,  47,  48,  49,  50,  51,  52,  53,  54,  55,
+            56,  57,  58,  59,  60,  61,  62,  63,  64,  65,  66,  67,  68,  69,
+            70,  71,  72,  73,  74,  75,  76,  77,  78,  79,  80,  81,  82,  83,
+            84,  85,  86,  87,  88,  89,  90,  91,  92,  93,  94,  95,  96,  97,
+            98,  99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111,
+           112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125,
+           126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139,
+           140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150])</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span class='xr-has-index'>longitude</span></div><div class='xr-var-dims'>(longitude)</div><div class='xr-var-dtype'>int64</div><div class='xr-var-preview xr-preview'>0 1 2 3 4 5 ... 167 168 169 170 171</div><input id='attrs-5f103368-9617-4e96-9a92-73f073028aec' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-5f103368-9617-4e96-9a92-73f073028aec' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-e410e5ed-3a68-4984-bfdd-0b84db2f90c5' class='xr-var-data-in' type='checkbox'><label for='data-e410e5ed-3a68-4984-bfdd-0b84db2f90c5' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([  0,   1,   2,   3,   4,   5,   6,   7,   8,   9,  10,  11,  12,  13,
+            14,  15,  16,  17,  18,  19,  20,  21,  22,  23,  24,  25,  26,  27,
+            28,  29,  30,  31,  32,  33,  34,  35,  36,  37,  38,  39,  40,  41,
+            42,  43,  44,  45,  46,  47,  48,  49,  50,  51,  52,  53,  54,  55,
+            56,  57,  58,  59,  60,  61,  62,  63,  64,  65,  66,  67,  68,  69,
+            70,  71,  72,  73,  74,  75,  76,  77,  78,  79,  80,  81,  82,  83,
+            84,  85,  86,  87,  88,  89,  90,  91,  92,  93,  94,  95,  96,  97,
+            98,  99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111,
+           112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125,
+           126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139,
+           140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153,
+           154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167,
+           168, 169, 170, 171])</pre></div></li></ul></div></li><li class='xr-section-item'><input id='section-eca43a1b-eee1-4d23-abea-e41a7f4b38c5' class='xr-section-summary-in' type='checkbox'  checked><label for='section-eca43a1b-eee1-4d23-abea-e41a7f4b38c5' class='xr-section-summary' >Attributes: <span>(1)</span></label><div class='xr-section-inline-details'></div><div class='xr-section-details'><dl class='xr-attrs'><dt><span>CB4_64_16D_STK-1 :</span></dt><dd>{&#x27;id&#x27;: &#x27;CB4_64_16D_STK-1&#x27;, &#x27;title&#x27;: &#x27;CBERS-4 - AWFI - Cube Stack 16 days - v001&#x27;, &#x27;descriptions&#x27;: [{&#x27;lang&#x27;: &#x27;en&#x27;, &#x27;description&#x27;: &quot;This datacube was generated with all available images surface reflectance images from CBERS-4/AWFI with 64 meters of spatial resolution, reprojected and cropped to BDC_LG grid, considering a temporal compositing function of 16 days using the best pixel approach (Stack). According to the INPE&#x27;s web site, CBERS is a cooperative program of China and Brazil containing 4 sensors (MUX, PAN, IRS and AWFI). The AWFI camera contains four spectral bands (blue, green, red and NIR), with a swath of 866km and a revisit period of 5 days. For more information on CBERS-4, please, see http://www.cbers.inpe.br/sobre/cbers3-4.php. This dataset was processed and made available by the Brazil Data Cube project, a component of the Environmental Monitoring of Brazilian Biomes project, funded by the Amazon Fund through the financial collaboration of the Brazilian Development Bank (BNDES) and the Foundation for Science, Technology and Space Applications (FUNCATE) no. 17.2.0536.1.&quot;, &#x27;descriptionType&#x27;: &#x27;Abstract&#x27;}], &#x27;extent&#x27;: {&#x27;spatial&#x27;: {&#x27;bbox&#x27;: [[-79.267539, -35.241045, -29.421667, 9.14676]]}, &#x27;temporal&#x27;: {&#x27;interval&#x27;: [[&#x27;2016-01-01T00:00:00&#x27;, &#x27;2021-02-17T00:00:00&#x27;]]}}, &#x27;properties&#x27;: {&#x27;eo:gsd&#x27;: 64.0, &#x27;eo:bands&#x27;: [{&#x27;name&#x27;: &#x27;BAND13&#x27;, &#x27;common_name&#x27;: &#x27;blue&#x27;, &#x27;description&#x27;: &#x27;&#x27;, &#x27;min&#x27;: 0.0, &#x27;max&#x27;: 10000.0, &#x27;nodata&#x27;: -9999.0, &#x27;scale&#x27;: 0.0001, &#x27;center_wavelength&#x27;: 0.485, &#x27;full_width_half_max&#x27;: 0.07, &#x27;data_type&#x27;: &#x27;int16&#x27;}, {&#x27;name&#x27;: &#x27;BAND14&#x27;, &#x27;common_name&#x27;: &#x27;green&#x27;, &#x27;description&#x27;: &#x27;&#x27;, &#x27;min&#x27;: 0.0, &#x27;max&#x27;: 10000.0, &#x27;nodata&#x27;: -9999.0, &#x27;scale&#x27;: 0.0001, &#x27;center_wavelength&#x27;: 0.555, &#x27;full_width_half_max&#x27;: 0.07, &#x27;data_type&#x27;: &#x27;int16&#x27;}, {&#x27;name&#x27;: &#x27;BAND15&#x27;, &#x27;common_name&#x27;: &#x27;red&#x27;, &#x27;description&#x27;: &#x27;&#x27;, &#x27;min&#x27;: 0.0, &#x27;max&#x27;: 10000.0, &#x27;nodata&#x27;: -9999.0, &#x27;scale&#x27;: 0.0001, &#x27;center_wavelength&#x27;: 0.66, &#x27;full_width_half_max&#x27;: 0.06, &#x27;data_type&#x27;: &#x27;int16&#x27;}, {&#x27;name&#x27;: &#x27;BAND16&#x27;, &#x27;common_name&#x27;: &#x27;nir&#x27;, &#x27;description&#x27;: &#x27;&#x27;, &#x27;min&#x27;: 0.0, &#x27;max&#x27;: 10000.0, &#x27;nodata&#x27;: -9999.0, &#x27;scale&#x27;: 0.0001, &#x27;center_wavelength&#x27;: 0.83, &#x27;full_width_half_max&#x27;: 0.12, &#x27;data_type&#x27;: &#x27;int16&#x27;}, {&#x27;name&#x27;: &#x27;CLEAROB&#x27;, &#x27;common_name&#x27;: &#x27;ClearOb&#x27;, &#x27;description&#x27;: &#x27;Clear Observation Count&#x27;, &#x27;min&#x27;: 1.0, &#x27;max&#x27;: 255.0, &#x27;nodata&#x27;: 0.0, &#x27;scale&#x27;: 1.0, &#x27;center_wavelength&#x27;: None, &#x27;full_width_half_max&#x27;: None, &#x27;data_type&#x27;: &#x27;uint8&#x27;}, {&#x27;name&#x27;: &#x27;CMASK&#x27;, &#x27;common_name&#x27;: &#x27;quality&#x27;, &#x27;description&#x27;: &#x27;&#x27;, &#x27;min&#x27;: 0.0, &#x27;max&#x27;: 4.0, &#x27;nodata&#x27;: 255.0, &#x27;scale&#x27;: 1.0, &#x27;center_wavelength&#x27;: None, &#x27;full_width_half_max&#x27;: None, &#x27;data_type&#x27;: &#x27;uint8&#x27;}, {&#x27;name&#x27;: &#x27;EVI&#x27;, &#x27;common_name&#x27;: &#x27;evi&#x27;, &#x27;description&#x27;: &#x27;Enhanced Vegetation Index&#x27;, &#x27;min&#x27;: -10000.0, &#x27;max&#x27;: 10000.0, &#x27;nodata&#x27;: -9999.0, &#x27;scale&#x27;: 0.0001, &#x27;center_wavelength&#x27;: None, &#x27;full_width_half_max&#x27;: None, &#x27;data_type&#x27;: &#x27;int16&#x27;}, {&#x27;name&#x27;: &#x27;NDVI&#x27;, &#x27;common_name&#x27;: &#x27;ndvi&#x27;, &#x27;description&#x27;: &#x27;&#x27;, &#x27;min&#x27;: -10000.0, &#x27;max&#x27;: 10000.0, &#x27;nodata&#x27;: -9999.0, &#x27;scale&#x27;: 0.0001, &#x27;center_wavelength&#x27;: None, &#x27;full_width_half_max&#x27;: None, &#x27;data_type&#x27;: &#x27;int16&#x27;}, {&#x27;name&#x27;: &#x27;PROVENANCE&#x27;, &#x27;common_name&#x27;: &#x27;Provenance&#x27;, &#x27;description&#x27;: &#x27;Provenance value Day of Year&#x27;, &#x27;min&#x27;: 1.0, &#x27;max&#x27;: 366.0, &#x27;nodata&#x27;: -1.0, &#x27;scale&#x27;: 1.0, &#x27;center_wavelength&#x27;: None, &#x27;full_width_half_max&#x27;: None, &#x27;data_type&#x27;: &#x27;int16&#x27;}, {&#x27;name&#x27;: &#x27;TOTALOB&#x27;, &#x27;common_name&#x27;: &#x27;TotalOb&#x27;, &#x27;description&#x27;: &#x27;Total Observation Count&#x27;, &#x27;min&#x27;: 1.0, &#x27;max&#x27;: 255.0, &#x27;nodata&#x27;: 0.0, &#x27;scale&#x27;: 1.0, &#x27;center_wavelength&#x27;: None, &#x27;full_width_half_max&#x27;: None, &#x27;data_type&#x27;: &#x27;uint8&#x27;}], &#x27;instruments&#x27;: [&#x27;AWFI&#x27;], &#x27;platform&#x27;: &#x27;CBERS-4&#x27;}}</dd></dl></div></li></ul></div></div>
+
+
+
+.. code:: python
+
+    blue = data.loc['blue','2018-07-28']
+    blue
+
+
+
+
+.. raw:: html
+
+    <div><svg style="position: absolute; width: 0; height: 0; overflow: hidden">
+    <defs>
+    <symbol id="icon-database" viewBox="0 0 32 32">
+    <path d="M16 0c-8.837 0-16 2.239-16 5v4c0 2.761 7.163 5 16 5s16-2.239 16-5v-4c0-2.761-7.163-5-16-5z"></path>
+    <path d="M16 17c-8.837 0-16-2.239-16-5v6c0 2.761 7.163 5 16 5s16-2.239 16-5v-6c0 2.761-7.163 5-16 5z"></path>
+    <path d="M16 26c-8.837 0-16-2.239-16-5v6c0 2.761 7.163 5 16 5s16-2.239 16-5v-6c0 2.761-7.163 5-16 5z"></path>
+    </symbol>
+    <symbol id="icon-file-text2" viewBox="0 0 32 32">
+    <path d="M28.681 7.159c-0.694-0.947-1.662-2.053-2.724-3.116s-2.169-2.030-3.116-2.724c-1.612-1.182-2.393-1.319-2.841-1.319h-15.5c-1.378 0-2.5 1.121-2.5 2.5v27c0 1.378 1.122 2.5 2.5 2.5h23c1.378 0 2.5-1.122 2.5-2.5v-19.5c0-0.448-0.137-1.23-1.319-2.841zM24.543 5.457c0.959 0.959 1.712 1.825 2.268 2.543h-4.811v-4.811c0.718 0.556 1.584 1.309 2.543 2.268zM28 29.5c0 0.271-0.229 0.5-0.5 0.5h-23c-0.271 0-0.5-0.229-0.5-0.5v-27c0-0.271 0.229-0.5 0.5-0.5 0 0 15.499-0 15.5 0v7c0 0.552 0.448 1 1 1h7v19.5z"></path>
+    <path d="M23 26h-14c-0.552 0-1-0.448-1-1s0.448-1 1-1h14c0.552 0 1 0.448 1 1s-0.448 1-1 1z"></path>
+    <path d="M23 22h-14c-0.552 0-1-0.448-1-1s0.448-1 1-1h14c0.552 0 1 0.448 1 1s-0.448 1-1 1z"></path>
+    <path d="M23 18h-14c-0.552 0-1-0.448-1-1s0.448-1 1-1h14c0.552 0 1 0.448 1 1s-0.448 1-1 1z"></path>
+    </symbol>
+    </defs>
+    </svg>
+    <style>/* CSS stylesheet for displaying xarray objects in jupyterlab.
+     *
+     */
+
+    :root {
+      --xr-font-color0: var(--jp-content-font-color0, rgba(0, 0, 0, 1));
+      --xr-font-color2: var(--jp-content-font-color2, rgba(0, 0, 0, 0.54));
+      --xr-font-color3: var(--jp-content-font-color3, rgba(0, 0, 0, 0.38));
+      --xr-border-color: var(--jp-border-color2, #e0e0e0);
+      --xr-disabled-color: var(--jp-layout-color3, #bdbdbd);
+      --xr-background-color: var(--jp-layout-color0, white);
+      --xr-background-color-row-even: var(--jp-layout-color1, white);
+      --xr-background-color-row-odd: var(--jp-layout-color2, #eeeeee);
+    }
+
+    html[theme=dark],
+    body.vscode-dark {
+      --xr-font-color0: rgba(255, 255, 255, 1);
+      --xr-font-color2: rgba(255, 255, 255, 0.54);
+      --xr-font-color3: rgba(255, 255, 255, 0.38);
+      --xr-border-color: #1F1F1F;
+      --xr-disabled-color: #515151;
+      --xr-background-color: #111111;
+      --xr-background-color-row-even: #111111;
+      --xr-background-color-row-odd: #313131;
+    }
+
+    .xr-wrap {
+      display: block;
+      min-width: 300px;
+      max-width: 700px;
+    }
+
+    .xr-text-repr-fallback {
+      /* fallback to plain text repr when CSS is not injected (untrusted notebook) */
+      display: none;
+    }
+
+    .xr-header {
+      padding-top: 6px;
+      padding-bottom: 6px;
+      margin-bottom: 4px;
+      border-bottom: solid 1px var(--xr-border-color);
+    }
+
+    .xr-header > div,
+    .xr-header > ul {
+      display: inline;
+      margin-top: 0;
+      margin-bottom: 0;
+    }
+
+    .xr-obj-type,
+    .xr-array-name {
+      margin-left: 2px;
+      margin-right: 10px;
+    }
+
+    .xr-obj-type {
+      color: var(--xr-font-color2);
+    }
+
+    .xr-sections {
+      padding-left: 0 !important;
+      display: grid;
+      grid-template-columns: 150px auto auto 1fr 20px 20px;
+    }
+
+    .xr-section-item {
+      display: contents;
+    }
+
+    .xr-section-item input {
+      display: none;
+    }
+
+    .xr-section-item input + label {
+      color: var(--xr-disabled-color);
+    }
+
+    .xr-section-item input:enabled + label {
+      cursor: pointer;
+      color: var(--xr-font-color2);
+    }
+
+    .xr-section-item input:enabled + label:hover {
+      color: var(--xr-font-color0);
+    }
+
+    .xr-section-summary {
+      grid-column: 1;
+      color: var(--xr-font-color2);
+      font-weight: 500;
+    }
+
+    .xr-section-summary > span {
+      display: inline-block;
+      padding-left: 0.5em;
+    }
+
+    .xr-section-summary-in:disabled + label {
+      color: var(--xr-font-color2);
+    }
+
+    .xr-section-summary-in + label:before {
+      display: inline-block;
+      content: '►';
+      font-size: 11px;
+      width: 15px;
+      text-align: center;
+    }
+
+    .xr-section-summary-in:disabled + label:before {
+      color: var(--xr-disabled-color);
+    }
+
+    .xr-section-summary-in:checked + label:before {
+      content: '▼';
+    }
+
+    .xr-section-summary-in:checked + label > span {
+      display: none;
+    }
+
+    .xr-section-summary,
+    .xr-section-inline-details {
+      padding-top: 4px;
+      padding-bottom: 4px;
+    }
+
+    .xr-section-inline-details {
+      grid-column: 2 / -1;
+    }
+
+    .xr-section-details {
+      display: none;
+      grid-column: 1 / -1;
+      margin-bottom: 5px;
+    }
+
+    .xr-section-summary-in:checked ~ .xr-section-details {
+      display: contents;
+    }
+
+    .xr-array-wrap {
+      grid-column: 1 / -1;
+      display: grid;
+      grid-template-columns: 20px auto;
+    }
+
+    .xr-array-wrap > label {
+      grid-column: 1;
+      vertical-align: top;
+    }
+
+    .xr-preview {
+      color: var(--xr-font-color3);
+    }
+
+    .xr-array-preview,
+    .xr-array-data {
+      padding: 0 5px !important;
+      grid-column: 2;
+    }
+
+    .xr-array-data,
+    .xr-array-in:checked ~ .xr-array-preview {
+      display: none;
+    }
+
+    .xr-array-in:checked ~ .xr-array-data,
+    .xr-array-preview {
+      display: inline-block;
+    }
+
+    .xr-dim-list {
+      display: inline-block !important;
+      list-style: none;
+      padding: 0 !important;
+      margin: 0;
+    }
+
+    .xr-dim-list li {
+      display: inline-block;
+      padding: 0;
+      margin: 0;
+    }
+
+    .xr-dim-list:before {
+      content: '(';
+    }
+
+    .xr-dim-list:after {
+      content: ')';
+    }
+
+    .xr-dim-list li:not(:last-child):after {
+      content: ',';
+      padding-right: 5px;
+    }
+
+    .xr-has-index {
+      font-weight: bold;
+    }
+
+    .xr-var-list,
+    .xr-var-item {
+      display: contents;
+    }
+
+    .xr-var-item > div,
+    .xr-var-item label,
+    .xr-var-item > .xr-var-name span {
+      background-color: var(--xr-background-color-row-even);
+      margin-bottom: 0;
+    }
+
+    .xr-var-item > .xr-var-name:hover span {
+      padding-right: 5px;
+    }
+
+    .xr-var-list > li:nth-child(odd) > div,
+    .xr-var-list > li:nth-child(odd) > label,
+    .xr-var-list > li:nth-child(odd) > .xr-var-name span {
+      background-color: var(--xr-background-color-row-odd);
+    }
+
+    .xr-var-name {
+      grid-column: 1;
+    }
+
+    .xr-var-dims {
+      grid-column: 2;
+    }
+
+    .xr-var-dtype {
+      grid-column: 3;
+      text-align: right;
+      color: var(--xr-font-color2);
+    }
+
+    .xr-var-preview {
+      grid-column: 4;
+    }
+
+    .xr-var-name,
+    .xr-var-dims,
+    .xr-var-dtype,
+    .xr-preview,
+    .xr-attrs dt {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      padding-right: 10px;
+    }
+
+    .xr-var-name:hover,
+    .xr-var-dims:hover,
+    .xr-var-dtype:hover,
+    .xr-attrs dt:hover {
+      overflow: visible;
+      width: auto;
+      z-index: 1;
+    }
+
+    .xr-var-attrs,
+    .xr-var-data {
+      display: none;
+      background-color: var(--xr-background-color) !important;
+      padding-bottom: 5px !important;
+    }
+
+    .xr-var-attrs-in:checked ~ .xr-var-attrs,
+    .xr-var-data-in:checked ~ .xr-var-data {
+      display: block;
+    }
+
+    .xr-var-data > table {
+      float: right;
+    }
+
+    .xr-var-name span,
+    .xr-var-data,
+    .xr-attrs {
+      padding-left: 25px !important;
+    }
+
+    .xr-attrs,
+    .xr-var-attrs,
+    .xr-var-data {
+      grid-column: 1 / -1;
+    }
+
+    dl.xr-attrs {
+      padding: 0;
+      margin: 0;
+      display: grid;
+      grid-template-columns: 125px auto;
+    }
+
+    .xr-attrs dt,
+    .xr-attrs dd {
+      padding: 0;
+      margin: 0;
+      float: left;
+      padding-right: 10px;
+      width: auto;
+    }
+
+    .xr-attrs dt {
+      font-weight: normal;
+      grid-column: 1;
+    }
+
+    .xr-attrs dt:hover span {
+      display: inline-block;
+      background: var(--xr-background-color);
+      padding-right: 10px;
+    }
+
+    .xr-attrs dd {
+      grid-column: 2;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+
+    .xr-icon-database,
+    .xr-icon-file-text2 {
+      display: inline-block;
+      vertical-align: middle;
+      width: 1em;
+      height: 1.5em !important;
+      stroke-width: 0;
+      stroke: currentColor;
+      fill: currentColor;
+    }
+    </style><pre class='xr-text-repr-fallback'>&lt;xarray.DataArray (latitude: 151, longitude: 172)&gt;
+    array([[ 570,  572,  562, ...,  560,  553,  573],
+           [ 563,  565,  565, ...,  557,  572,  557],
+           [ 558,  549,  557, ...,  546,  569,  581],
+           ...,
+           [ 855,  851,  854, ..., 1121, 1099, 1118],
+           [ 861,  860,  851, ..., 1109, 1091, 1107],
+           [ 819,  809,  797, ..., 1101, 1121, 1098]], dtype=int16)
+    Coordinates:
+        band       &lt;U5 &#x27;blue&#x27;
+        time       datetime64[ns] 2018-07-28
+      * latitude   (latitude) int64 0 1 2 3 4 5 6 7 ... 144 145 146 147 148 149 150
+      * longitude  (longitude) int64 0 1 2 3 4 5 6 7 ... 165 166 167 168 169 170 171
+    Attributes:
+        CB4_64_16D_STK-1:  {&#x27;id&#x27;: &#x27;CB4_64_16D_STK-1&#x27;, &#x27;title&#x27;: &#x27;CBERS-4 - AWFI - ...</pre><div class='xr-wrap' hidden><div class='xr-header'><div class='xr-obj-type'>xarray.DataArray</div><div class='xr-array-name'></div><ul class='xr-dim-list'><li><span class='xr-has-index'>latitude</span>: 151</li><li><span class='xr-has-index'>longitude</span>: 172</li></ul></div><ul class='xr-sections'><li class='xr-section-item'><div class='xr-array-wrap'><input id='section-d7707591-7e56-4938-b663-1bca40efe8da' class='xr-array-in' type='checkbox' checked><label for='section-d7707591-7e56-4938-b663-1bca40efe8da' title='Show/hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-array-preview xr-preview'><span>570 572 562 560 581 610 661 698 ... 1212 1216 1191 1159 1101 1121 1098</span></div><div class='xr-array-data'><pre>array([[ 570,  572,  562, ...,  560,  553,  573],
+           [ 563,  565,  565, ...,  557,  572,  557],
+           [ 558,  549,  557, ...,  546,  569,  581],
+           ...,
+           [ 855,  851,  854, ..., 1121, 1099, 1118],
+           [ 861,  860,  851, ..., 1109, 1091, 1107],
+           [ 819,  809,  797, ..., 1101, 1121, 1098]], dtype=int16)</pre></div></div></li><li class='xr-section-item'><input id='section-919fe768-ee26-4c48-b6d6-3a048e65ffa4' class='xr-section-summary-in' type='checkbox'  checked><label for='section-919fe768-ee26-4c48-b6d6-3a048e65ffa4' class='xr-section-summary' >Coordinates: <span>(4)</span></label><div class='xr-section-inline-details'></div><div class='xr-section-details'><ul class='xr-var-list'><li class='xr-var-item'><div class='xr-var-name'><span>band</span></div><div class='xr-var-dims'>()</div><div class='xr-var-dtype'>&lt;U5</div><div class='xr-var-preview xr-preview'>&#x27;blue&#x27;</div><input id='attrs-33ef1cfe-debf-4a14-beca-3b53ed8888b4' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-33ef1cfe-debf-4a14-beca-3b53ed8888b4' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-ccdd1e78-0591-4ffa-bbc5-82d0ddda38bf' class='xr-var-data-in' type='checkbox'><label for='data-ccdd1e78-0591-4ffa-bbc5-82d0ddda38bf' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array(&#x27;blue&#x27;, dtype=&#x27;&lt;U5&#x27;)</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span>time</span></div><div class='xr-var-dims'>()</div><div class='xr-var-dtype'>datetime64[ns]</div><div class='xr-var-preview xr-preview'>2018-07-28</div><input id='attrs-fc7bd912-95dc-45d5-972f-833a446f3712' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-fc7bd912-95dc-45d5-972f-833a446f3712' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-72984118-6865-4bde-ba13-6136b6eb1a1f' class='xr-var-data-in' type='checkbox'><label for='data-72984118-6865-4bde-ba13-6136b6eb1a1f' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array(&#x27;2018-07-28T00:00:00.000000000&#x27;, dtype=&#x27;datetime64[ns]&#x27;)</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span class='xr-has-index'>latitude</span></div><div class='xr-var-dims'>(latitude)</div><div class='xr-var-dtype'>int64</div><div class='xr-var-preview xr-preview'>0 1 2 3 4 5 ... 146 147 148 149 150</div><input id='attrs-653e7164-83e4-44dd-99f2-69bb4323e92c' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-653e7164-83e4-44dd-99f2-69bb4323e92c' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-3ac95d69-53d5-4509-bf55-044759f36283' class='xr-var-data-in' type='checkbox'><label for='data-3ac95d69-53d5-4509-bf55-044759f36283' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([  0,   1,   2,   3,   4,   5,   6,   7,   8,   9,  10,  11,  12,  13,
+            14,  15,  16,  17,  18,  19,  20,  21,  22,  23,  24,  25,  26,  27,
+            28,  29,  30,  31,  32,  33,  34,  35,  36,  37,  38,  39,  40,  41,
+            42,  43,  44,  45,  46,  47,  48,  49,  50,  51,  52,  53,  54,  55,
+            56,  57,  58,  59,  60,  61,  62,  63,  64,  65,  66,  67,  68,  69,
+            70,  71,  72,  73,  74,  75,  76,  77,  78,  79,  80,  81,  82,  83,
+            84,  85,  86,  87,  88,  89,  90,  91,  92,  93,  94,  95,  96,  97,
+            98,  99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111,
+           112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125,
+           126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139,
+           140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150])</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span class='xr-has-index'>longitude</span></div><div class='xr-var-dims'>(longitude)</div><div class='xr-var-dtype'>int64</div><div class='xr-var-preview xr-preview'>0 1 2 3 4 5 ... 167 168 169 170 171</div><input id='attrs-9bc8067d-d029-48c3-9297-4bd348c8b5b4' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-9bc8067d-d029-48c3-9297-4bd348c8b5b4' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-5b37d9d2-8b26-4066-92f9-807d6d67683b' class='xr-var-data-in' type='checkbox'><label for='data-5b37d9d2-8b26-4066-92f9-807d6d67683b' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([  0,   1,   2,   3,   4,   5,   6,   7,   8,   9,  10,  11,  12,  13,
+            14,  15,  16,  17,  18,  19,  20,  21,  22,  23,  24,  25,  26,  27,
+            28,  29,  30,  31,  32,  33,  34,  35,  36,  37,  38,  39,  40,  41,
+            42,  43,  44,  45,  46,  47,  48,  49,  50,  51,  52,  53,  54,  55,
+            56,  57,  58,  59,  60,  61,  62,  63,  64,  65,  66,  67,  68,  69,
+            70,  71,  72,  73,  74,  75,  76,  77,  78,  79,  80,  81,  82,  83,
+            84,  85,  86,  87,  88,  89,  90,  91,  92,  93,  94,  95,  96,  97,
+            98,  99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111,
+           112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125,
+           126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139,
+           140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153,
+           154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167,
+           168, 169, 170, 171])</pre></div></li></ul></div></li><li class='xr-section-item'><input id='section-cc09f356-0d4c-4a23-aab1-b83bbb4ef0da' class='xr-section-summary-in' type='checkbox'  checked><label for='section-cc09f356-0d4c-4a23-aab1-b83bbb4ef0da' class='xr-section-summary' >Attributes: <span>(1)</span></label><div class='xr-section-inline-details'></div><div class='xr-section-details'><dl class='xr-attrs'><dt><span>CB4_64_16D_STK-1 :</span></dt><dd>{&#x27;id&#x27;: &#x27;CB4_64_16D_STK-1&#x27;, &#x27;title&#x27;: &#x27;CBERS-4 - AWFI - Cube Stack 16 days - v001&#x27;, &#x27;descriptions&#x27;: [{&#x27;lang&#x27;: &#x27;en&#x27;, &#x27;description&#x27;: &quot;This datacube was generated with all available images surface reflectance images from CBERS-4/AWFI with 64 meters of spatial resolution, reprojected and cropped to BDC_LG grid, considering a temporal compositing function of 16 days using the best pixel approach (Stack). According to the INPE&#x27;s web site, CBERS is a cooperative program of China and Brazil containing 4 sensors (MUX, PAN, IRS and AWFI). The AWFI camera contains four spectral bands (blue, green, red and NIR), with a swath of 866km and a revisit period of 5 days. For more information on CBERS-4, please, see http://www.cbers.inpe.br/sobre/cbers3-4.php. This dataset was processed and made available by the Brazil Data Cube project, a component of the Environmental Monitoring of Brazilian Biomes project, funded by the Amazon Fund through the financial collaboration of the Brazilian Development Bank (BNDES) and the Foundation for Science, Technology and Space Applications (FUNCATE) no. 17.2.0536.1.&quot;, &#x27;descriptionType&#x27;: &#x27;Abstract&#x27;}], &#x27;extent&#x27;: {&#x27;spatial&#x27;: {&#x27;bbox&#x27;: [[-79.267539, -35.241045, -29.421667, 9.14676]]}, &#x27;temporal&#x27;: {&#x27;interval&#x27;: [[&#x27;2016-01-01T00:00:00&#x27;, &#x27;2021-02-17T00:00:00&#x27;]]}}, &#x27;properties&#x27;: {&#x27;eo:gsd&#x27;: 64.0, &#x27;eo:bands&#x27;: [{&#x27;name&#x27;: &#x27;BAND13&#x27;, &#x27;common_name&#x27;: &#x27;blue&#x27;, &#x27;description&#x27;: &#x27;&#x27;, &#x27;min&#x27;: 0.0, &#x27;max&#x27;: 10000.0, &#x27;nodata&#x27;: -9999.0, &#x27;scale&#x27;: 0.0001, &#x27;center_wavelength&#x27;: 0.485, &#x27;full_width_half_max&#x27;: 0.07, &#x27;data_type&#x27;: &#x27;int16&#x27;}, {&#x27;name&#x27;: &#x27;BAND14&#x27;, &#x27;common_name&#x27;: &#x27;green&#x27;, &#x27;description&#x27;: &#x27;&#x27;, &#x27;min&#x27;: 0.0, &#x27;max&#x27;: 10000.0, &#x27;nodata&#x27;: -9999.0, &#x27;scale&#x27;: 0.0001, &#x27;center_wavelength&#x27;: 0.555, &#x27;full_width_half_max&#x27;: 0.07, &#x27;data_type&#x27;: &#x27;int16&#x27;}, {&#x27;name&#x27;: &#x27;BAND15&#x27;, &#x27;common_name&#x27;: &#x27;red&#x27;, &#x27;description&#x27;: &#x27;&#x27;, &#x27;min&#x27;: 0.0, &#x27;max&#x27;: 10000.0, &#x27;nodata&#x27;: -9999.0, &#x27;scale&#x27;: 0.0001, &#x27;center_wavelength&#x27;: 0.66, &#x27;full_width_half_max&#x27;: 0.06, &#x27;data_type&#x27;: &#x27;int16&#x27;}, {&#x27;name&#x27;: &#x27;BAND16&#x27;, &#x27;common_name&#x27;: &#x27;nir&#x27;, &#x27;description&#x27;: &#x27;&#x27;, &#x27;min&#x27;: 0.0, &#x27;max&#x27;: 10000.0, &#x27;nodata&#x27;: -9999.0, &#x27;scale&#x27;: 0.0001, &#x27;center_wavelength&#x27;: 0.83, &#x27;full_width_half_max&#x27;: 0.12, &#x27;data_type&#x27;: &#x27;int16&#x27;}, {&#x27;name&#x27;: &#x27;CLEAROB&#x27;, &#x27;common_name&#x27;: &#x27;ClearOb&#x27;, &#x27;description&#x27;: &#x27;Clear Observation Count&#x27;, &#x27;min&#x27;: 1.0, &#x27;max&#x27;: 255.0, &#x27;nodata&#x27;: 0.0, &#x27;scale&#x27;: 1.0, &#x27;center_wavelength&#x27;: None, &#x27;full_width_half_max&#x27;: None, &#x27;data_type&#x27;: &#x27;uint8&#x27;}, {&#x27;name&#x27;: &#x27;CMASK&#x27;, &#x27;common_name&#x27;: &#x27;quality&#x27;, &#x27;description&#x27;: &#x27;&#x27;, &#x27;min&#x27;: 0.0, &#x27;max&#x27;: 4.0, &#x27;nodata&#x27;: 255.0, &#x27;scale&#x27;: 1.0, &#x27;center_wavelength&#x27;: None, &#x27;full_width_half_max&#x27;: None, &#x27;data_type&#x27;: &#x27;uint8&#x27;}, {&#x27;name&#x27;: &#x27;EVI&#x27;, &#x27;common_name&#x27;: &#x27;evi&#x27;, &#x27;description&#x27;: &#x27;Enhanced Vegetation Index&#x27;, &#x27;min&#x27;: -10000.0, &#x27;max&#x27;: 10000.0, &#x27;nodata&#x27;: -9999.0, &#x27;scale&#x27;: 0.0001, &#x27;center_wavelength&#x27;: None, &#x27;full_width_half_max&#x27;: None, &#x27;data_type&#x27;: &#x27;int16&#x27;}, {&#x27;name&#x27;: &#x27;NDVI&#x27;, &#x27;common_name&#x27;: &#x27;ndvi&#x27;, &#x27;description&#x27;: &#x27;&#x27;, &#x27;min&#x27;: -10000.0, &#x27;max&#x27;: 10000.0, &#x27;nodata&#x27;: -9999.0, &#x27;scale&#x27;: 0.0001, &#x27;center_wavelength&#x27;: None, &#x27;full_width_half_max&#x27;: None, &#x27;data_type&#x27;: &#x27;int16&#x27;}, {&#x27;name&#x27;: &#x27;PROVENANCE&#x27;, &#x27;common_name&#x27;: &#x27;Provenance&#x27;, &#x27;description&#x27;: &#x27;Provenance value Day of Year&#x27;, &#x27;min&#x27;: 1.0, &#x27;max&#x27;: 366.0, &#x27;nodata&#x27;: -1.0, &#x27;scale&#x27;: 1.0, &#x27;center_wavelength&#x27;: None, &#x27;full_width_half_max&#x27;: None, &#x27;data_type&#x27;: &#x27;int16&#x27;}, {&#x27;name&#x27;: &#x27;TOTALOB&#x27;, &#x27;common_name&#x27;: &#x27;TotalOb&#x27;, &#x27;description&#x27;: &#x27;Total Observation Count&#x27;, &#x27;min&#x27;: 1.0, &#x27;max&#x27;: 255.0, &#x27;nodata&#x27;: 0.0, &#x27;scale&#x27;: 1.0, &#x27;center_wavelength&#x27;: None, &#x27;full_width_half_max&#x27;: None, &#x27;data_type&#x27;: &#x27;uint8&#x27;}], &#x27;instruments&#x27;: [&#x27;AWFI&#x27;], &#x27;platform&#x27;: &#x27;CBERS-4&#x27;}}</dd></dl></div></li></ul></div></div>
+
+
+
+.. code:: python
+
+    plt.figure(figsize=(10, 5))
+    colormap = plt.get_cmap('Blues', 1000)
+    plt.imshow(
+        blue,
+        cmap=colormap
+    )
+    plt.tight_layout()
+    plt.colorbar()
+
+    plt.show()
+
+
+
+.. image:: ./assets/img/output_4_0.png
+
+
+.. code:: python
+
+    raster = eocube_service.getImages()[0]
+
+.. code:: python
+
+    raster._afimPointsToCoord(-1, 9, 'red')
+
+
+
+
+.. parsed-literal::
+
+    (-66.64329875327383, -6.943719810906391)
+
+
+
+.. code:: python
+
+    raster._afimCoordsToPoint(-66.64329875327383, -6.943719810906391, 'red')
+
+
+
+
+.. parsed-literal::
+
+    (-1, 9)
+
+
+
+.. code:: python
+
+    plt.figure(figsize=(10, 5))
+    plt.imshow(raster.getRGB())
+    plt.tight_layout()
+
+    plt.show()
+
+
+.. parsed-literal::
+
+    Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers).
+
+
+
+.. image:: ./assets/img/output_8_1.png
+

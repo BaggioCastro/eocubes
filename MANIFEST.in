@@ -1,0 +1,9 @@
+include *.py
+include *.sh
+recursive-include help *.css
+recursive-include help *.ico
+recursive-include help *.ipynb
+recursive-include help *.png
+recursive-include help *.py
+recursive-include help *.rst
+recursive-include tests *.py
