@@ -78,6 +78,7 @@ Instalar as depências utilizando o arquivo [`setup.py`](./setup.py):
 .. code-block:: shell
 
     (eocube) ~/eocube $ python -m pip install -e .[all]
+    (eocube) ~/home $ python -m pip install git+https://github.com/AbnerErnaniADSFatec/eocubes
 
 Execução
 --------

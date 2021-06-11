@@ -27,15 +27,6 @@ About
 
 Construir uma biblioteca Python chamada EOCubes que forneça uma abstração denominada DataCube para cubos de dados de observação da Terra. Essa abstração deverá possibilitar o uso das coleções disponíveis no serviço STAC da Plataforma Brazil Data Cube. Utilize as bibliotecas stac.py e Xarray na construção dessa nova bilioteca. Considere criar um ou mais Notebooks que ajudem a apresentar as funcionalidades desse pacote. Utilize os cubos de dados disponíveis no portal do projeto Brazil Data Cube para testar a biblioteca desenvolvida. Forneça exemplos de uso dessa biblioteca, por exemplo, com operações de geração de índices espectrais ou extração de séries temporais. Também considere integrar recursos de visualização e processamento paralelo.
 
-Installation
-============
-
-See `INSTALL.rst <https://github.com/prog-geo/eocubes>`_.
-
-Unit Tests
-==========
-
-See `TESTS.rst <https://github.com/prog-geo/eocubes>`_.
 
 References
 ==========
