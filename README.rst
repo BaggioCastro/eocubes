@@ -22,18 +22,21 @@ API - EO Data Cube
         :target: https://www.python.org/
         :alt: Python
 
-About
+Sobre
 =====
 
 Construir uma biblioteca Python chamada EOCubes que forneça uma abstração denominada DataCube para cubos de dados de observação da Terra. Essa abstração deverá possibilitar o uso das coleções disponíveis no serviço STAC da Plataforma Brazil Data Cube. Utilize as bibliotecas stac.py e Xarray na construção dessa nova bilioteca. Considere criar um ou mais Notebooks que ajudem a apresentar as funcionalidades desse pacote. Utilize os cubos de dados disponíveis no portal do projeto Brazil Data Cube para testar a biblioteca desenvolvida. Forneça exemplos de uso dessa biblioteca, por exemplo, com operações de geração de índices espectrais ou extração de séries temporais. Também considere integrar recursos de visualização e processamento paralelo.
 
+Referências
+===========
 
-References
-==========
+- Carlos, F. M., Gomes, V. C., de Queiroz, G. R., Ferreira, K. R., and Santos, R. (2020). Integracão dos ambientes Brazil Data Cube e Open Data Cube.Proceedings XXI GE-OINFO, pages 168–173;
 
-- VINHAS, L. ; QUEIROZ, G. R. ; FERREIRA, K. R. ; C MARA, G.  Web Services for Big Earth Observation Data. RBC. REVISTA BRASILEIRA DE CARTOGRAFIA (ONLINE), v. 69, p. 6, 2016.
+- Chaves,  B.  I.,  Francisco,  P.  R.  M.,  Lima,  E.  R.  V.,  Silva,  B.  B.,  Brand ̃ao,  Z.  N., and Chaves, L. H. G. (2013). ́Indices espectrais, diagnóstico da vegetacão e da degradacão da Caatinga da Bacia do Rio Tapero ́a-PB. Embrapa;
 
-- QUEIROZ, G. R.; FERREIRA, K. R.; VINHAS, L.; CAMARA, G.; COSTA, R. W.; Souza, R. C. M.; Maus,V. W.; Sanchez, A. WTSS: um serviço web para extração de séries temporais de imagens de sensoriamento remoto. In: Proceedings of the XVII Brazilian Symposium on Remote Sensing, pages 7553–7560. 2015.
+- Vogt, A., Wytzisk-Arens, A., Drost, S., and Jirka, S. (2019). Cloud based discovery andprocessing of geospatial data.Conference on Geo-Information Science;
+
+- Zaglia, M. C., Vinhas, L., Queiroz, G. R., and Simoes, R. (2019).  Catalogac ̧ ̃ao de Meta-dados do Cubo de Dados do Brasil com o SpatioTemporal Asset Catalog.ProceedingsXX GEOINFO, pages 280–285
 
 License
 =======

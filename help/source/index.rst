@@ -7,7 +7,7 @@
     See LICENSE file for more details.
 
 .. include:: ../../README.rst
-   :end-before: About
+   :end-before: Sobre
 
 .. toctree::
     :hidden:

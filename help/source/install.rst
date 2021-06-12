@@ -6,85 +6,77 @@
     You can redistribute it and/or modify it under the terms of the MIT License;
     See LICENSE file for more details.
 
-============
-Installation
-============
+==========
+Instalação
+==========
 
-Criação do Ambiente Virtual MiniConda
--------------------------------------
+Requisitos necessários `Python version +3 <https://www.python.org/>`_.
 
-Criar um ambiente com o miniconda:
-
-.. code-block:: shell
-
-    $ conda create --name eocube python==3.8
-
-Ativar o ambiente:
+Para instalar o pacote python para acessar dados de observação da terra faça o clone do repositório:
 
 .. code-block:: shell
 
-    $ conda activate eocube
+    git clone https://github.com/prog-geo/eocubes
 
-Instalando as dependências
---------------------------
-
-Instalando a dependência `IPython` para utilizar o ambiente conda no jupyter:
+Antes de instalar as dependências atualize para a versão mais recente do gerenciador de pacotes `python-pip`:
 
 .. code-block:: shell
 
-    (eocube) $ conda install -c anaconda ipython ipykernel jupyter
+    pip install --upgrade pip
 
-Para instalar as dependências específicas de cada exemplo [EO Cube](./eocube) e o serviço [EO Cube](./eocube), faremos uma conexão com o ambiente virtual criado anteriormente:
+Instalação simples
+------------------
 
-.. code-block:: shell
-
-    (eocube) $ ipython kernel install --user --name eocube
-
-Documentação e Testes
----------------------
-
-Construção da documentação e execução dos testes unitários para a API e o pacote EOCube `./help/build/index.html`.
+Na pasta root do repositório `/eocubes` execute o comando abaixo para instalar o pacote juntamente com as dependências necessárias
 
 .. code-block:: shell
 
-    eocube) $ sudo chmod +x ./build.sh && ./build.sh
+    pip install -e .[all]
 
-Execução
---------
+.. note::
 
-Execução do pacote no ambiente Jupyter no Python.
+    Caso houver algum problema na instalação por conta de uma
+    dependência é recomendável a criação de um ambiente virtual `conda` ou `pyenv`.
 
-.. code-block:: shell
-
-    (eocube) $ jupyter notebook
-
-Instalação das Dependências
+Criação do Ambiente Virtual
 ---------------------------
 
-Atualizar o pacote `pip` e o `setuptools` para a instalação:
+A instalação por meio de um ambiente virtual pode ser feita utilizando a ferramenta `Miniconda <https://docs.conda.io/en/latest/miniconda.html>`_ ou o pacote `pypenv <https://pypi.org/project/pyenv/>`_.
+
+Miniconda
+*********
+
+Para criar um ambiente virtual com o `miniconda` execute o comando abaixo:
 
 .. code-block:: shell
 
-    (eocube) ~/eocube $ python -m pip install --upgrade pip setuptools
+    conda create --name eocube python==3.8
 
-Realizar a instalação do pacote `GDAL` para a manipulação de imagens:
-
-.. code-block:: shell
-
-    (eocube) ~/eocube $ conda install GDAL
-
-Instalar as depências utilizando o arquivo [`setup.py`](./setup.py):
+Ative o ambiente virtual:
 
 .. code-block:: shell
 
-    (eocube) ~/eocube $ python -m pip install -e .[all]
-    (eocube) ~/home $ python -m pip install git+https://github.com/AbnerErnaniADSFatec/eocubes
+    conda activate eocube
 
-Execução
---------
+Pyenv
+*****
 
- - **Obs.:** Não esqueça de que a cada atualização do pacote o comando de instalação `.[all]` deve ser executado para atualizar o repositório, o kernel do `jupyter-notebook` deve ser reiniciado também:
+Para criar um ambiente virtual com o `pyenv` execute o comando abaixo:
 
-.. code-block:: python
+.. code-block:: shell
 
-    from eocube import EOCube
+    python3 -m venv venv
+
+Ative o ambiente virtual:
+
+.. code-block:: shell
+
+    source venv/bin/activate
+
+.. note::
+
+    Com o ambiente virtual criado é possível executar os comandos de instalação do pacote:
+
+    .. code-block:: shell
+
+        python -m pip install -e .[all]
