@@ -34,7 +34,7 @@ Identificação
 =============
 
  - **Programa:** Programa de Pós-Graduação em Computação Aplicada;
- - **Disciplina:** CAP-419: Introdução à Programação com Dados Geoespaciais;
+ - **Disciplina:** CAP-419 Introdução à Programação com Dados Geoespaciais;
  - **Professores:** Gilberto Queiroz e Thales Korting;
  - **Alunos:** Abner Ernâni dos Anjos, Baggio Luiz de Castro e Silva e Marcelly Homem Coelho.
 

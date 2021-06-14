@@ -14,6 +14,13 @@ email                : none@inpe.br
 This program is free software.
 You can redistribute it and/or modify it under the terms of the GNU General Public License as published by
 the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
+
+Environment Variables
+
+- BASE_DIR = os.path.abspath(os.path.dirname(__file__))
+- EOCUBE_URL = "http://localhost:5000/eocube"
+- STAC_URL = "https://brazildatacube.dpi.inpe.br/stac/"
+- ACCESS_TOKEN = ""
 """
 
 import os
