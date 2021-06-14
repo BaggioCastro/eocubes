@@ -522,6 +522,8 @@ class DataCube():
                 plt.colorbar()
             elif method in self.query_bands:
                 colormap = plt.get_cmap('Greys', 1000)
+                if method in ['red', 'green', 'blue']:
+                    colormap = plt.get_cmap('Greys', 255).reversed()
                 plt.imshow(self.data_images[date].getBand(method), cmap=colormap)
                 plt.title(f'\nComposição da Banda {method.upper()} {date} \n')
                 plt.colorbar()
