@@ -1,0 +1,23 @@
+include *.py
+include *.sh
+include LICENSE
+recursive-include docs *.buildinfo
+recursive-include docs *.css
+recursive-include docs *.eot
+recursive-include docs *.html
+recursive-include docs *.ico
+recursive-include docs *.inv
+recursive-include docs *.js
+recursive-include docs *.png
+recursive-include docs *.svg
+recursive-include docs *.ttf
+recursive-include docs *.txt
+recursive-include docs *.woff
+recursive-include docs *.woff2
+recursive-include help *.css
+recursive-include help *.ico
+recursive-include help *.ipynb
+recursive-include help *.png
+recursive-include help *.py
+recursive-include help *.rst
+recursive-include tests *.py
