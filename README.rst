@@ -71,10 +71,10 @@ O retornado ao usuário consiste em um objeto, o qual é possível solicitar a v
 
 Em relação ao código fonte do pacote, as classes foram organizadas conforme é apresentado na Figura abaixo. A classe de configuração "*Config*" armazena os endereços para o serviço STAC, o código de acesso do usuário e o arquivo de busca de informações "*Info*". O arquivo "*Info*" possui uma abstração capaz de retornar uma listas com as coleções disponíveis e suas respectivas descrições.
 
-.. image:: ../source/assets/img/diagrama_classes.png
+.. image:: ./help/source/assets/img/diagrama_classes.png
   :width: 900
   :align: center
-  :alt: ../source/assets/img/
+  :alt: ./help/source/assets/img/
 
 As classes "*Spectral*" e "*Utils*" fornecem abstrações para os cálculos dos índices espectrais e a conversão de coordenadas. Com estes métodos implementados, foram criadas outras duas abstrações, as quais tratam as imagens retornadas pelo serviço. As classes "*Images*" e "*DataCube*" fazem a unificação de todas as operações que os usuários podem executar sobre o conjunto de dados.
 
@@ -83,10 +83,10 @@ Tecnologias Utilizadas
 
 A Figura a seguir apresenta uma visão geral da arquitetura do pacote *EOCube*.
 
-.. image:: ../source/assets/img/arquitetura_eocube.png
+.. image:: ./help/source/assets/img/arquitetura_eocube.png
   :width: 600
   :align: center
-  :alt: ../source/assets/img/
+  :alt: ./help/source/assets/img/
 
 Para o desenvolvimento do pacote *EOCube* foi utilizada a linguagem de programação *Python*. Para o retorno dos metadados das imagens, foram usados o serviço de catalogação de imagens do projeto BDC, o serviço STAC e a sua abstração em linguagem de programação *Python*. Já para a busca e para o recorte de imagens, foi usado o pacote *STAC.py*. A estruturação dos dados foi feita por meio de matrizes indexadas, denominadas *Xarray*, que foram implementadas aplicando programação paralela com o pacote *Dask*. 
 
