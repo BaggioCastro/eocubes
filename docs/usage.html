@@ -213,13 +213,12 @@ da busca.</p>
 <p>Para iniciar nosso estudo de caso precisando importar as bibliotecas
 necessárias como a <code class="docutils literal notranslate"><span class="pre">matplotlib</span></code> para visualizar os dados de forma
 gráfica e customizar a visualização das imagens.</p>
-<p>Logo, importanmos a biblioteca <code class="docutils literal notranslate"><span class="pre">DataCube</span></code> do pacote <em>EOCube</em>
-juntamente com a biblioteca <code class="docutils literal notranslate"><span class="pre">info</span></code> para o retorno das informações do
-<em>STAC</em> e a bibloteca <code class="docutils literal notranslate"><span class="pre">config</span></code> para configurar nossas variáveis de
-ambiente.</p>
+<p>Logo, importamos a biblioteca <code class="docutils literal notranslate"><span class="pre">DataCube</span></code> do pacote <em>EOCube</em> juntamente
+com a biblioteca <code class="docutils literal notranslate"><span class="pre">info</span></code> para o retorno das informações do <em>STAC</em> e a
+bibloteca <code class="docutils literal notranslate"><span class="pre">config</span></code> para configurar nossas variáveis de ambiente.</p>
 <p>Como utilizaremos o serviço <em>STAC</em> do Projeto <em>Brazil Data Cube - BDC</em>
 não necessitamos alterar o <code class="docutils literal notranslate"><span class="pre">config.STAC_URL</span></code> para outros servidores.</p>
-<p>Então vamos inserir o <em>token</em> de acesso adiquirido pelo <em>site</em> de
+<p>Então vamos inserir o <em>token</em> de acesso adquirido pelo <em>site</em> de
 autenticação <a class="reference external" href="https://brazildatacube.dpi.inpe.br/auth/v1/auth/login">BDC
 Auth</a> do
 projeto <em>BDC</em>.</p>
@@ -918,13 +917,13 @@ latitudes, onde:</p>
 </ul>
 <p><strong>Observação:</strong> O formato segue o padrão: bbox = [min Longitude , min
 Latitude , max Longitude , max Latitude]. As coordenadas acima podem ser
-adiquiridas utilizando a ferramenta <em>online</em> para visualização dos
-cubos, o <a class="reference external" href="http://brazildatacube.dpi.inpe.br/portal/explore">Portal do Projeto Brazil Data
+adquiridas utilizando a ferramenta <em>online</em> para visualização dos cubos,
+o <a class="reference external" href="http://brazildatacube.dpi.inpe.br/portal/explore">Portal do Projeto Brazil Data
 Cube</a>.</p>
 </div>
 <div class="section" id="filtros-de-entrada">
 <h4>Filtros de entrada<a class="headerlink" href="#filtros-de-entrada" title="Permalink to this headline">¶</a></h4>
-<p>Para fins de testagem utilizaremos os seguintes parâmetros:</p>
+<p>Para fins de teste utilizaremos os seguintes parâmetros:</p>
 <ul class="simple">
 <li><p><strong>Collection</strong>: CBERS-4 - AWFI - Cube Stack 16 days - v001;</p></li>
 <li><p><strong>Bands</strong>: Red, Green, Blue e NIR (Near Infra-red);</p></li>
@@ -935,12 +934,12 @@ Cube</a>.</p>
 <p>Para este primeiro estudo de caso utilizaremos uma área de estudo
 referente ao município de São José dos Campos.</p>
 <p>Podemos conferir se estes atributos estão de acordo com a resposta
-retornada acima e com os filtro definidos vamos conferir a documentação
+retornada acima e com os filtros definidos vamos conferir a documentação
 para a biblioteca <code class="docutils literal notranslate"><span class="pre">DataCube</span></code>:</p>
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>DataCube<span class="o">?</span>
 </pre></div>
 </div>
-<p>Com o retorno podemos verifirar a colocação e a nomeclatura das
+<p>Com o retorno podemos verificar a colocação e a nomeclatura das
 variavéis e criar nosso cubo de dados de exemplo com base nesta
 informação:</p>
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%%time</span>
@@ -962,9 +961,9 @@ informação:</p>
 </div>
 <div class="section" id="operacoes-com-o-cubo-de-dados">
 <h3>Operações com o Cubo de dados<a class="headerlink" href="#operacoes-com-o-cubo-de-dados" title="Permalink to this headline">¶</a></h3>
-<p>Primeiramente com o cubo de dados criado podemos executar os métodos
-listados anteriormente na documentação da biblioteca.</p>
-<p>Vamos primeiro visualizar os dados adiquiridos em forma de imagems em
+<p>Primeiramente, com o cubo de dados criado, podemos executar os métodos
+listados na documentação da biblioteca.</p>
+<p>Vamos primeiro visualizar os dados adquiridos em forma de imagems em
 composição colorida.</p>
 <p>Para este método é essencial a existência das bandas <em>Red</em>, <em>Green</em> e
 <em>Blue</em> para o cálculo da composição colorida da imagem, caso estas
@@ -1827,7 +1826,7 @@ Attributes:
 <h4>Séries temporais<a class="headerlink" href="#series-temporais" title="Permalink to this headline">¶</a></h4>
 <p>Por meio de um cubo de dados podemos visualizar uma série temporal com
 base nas mudanças que um determinado ponto no mapa (na área de
-interesse) sovreu durante um certo período de tempo.</p>
+interesse) sofreu durante um certo período de tempo.</p>
 <p>Para este método também é possivel visualizar a documentação para
 inferir um período de tempo customizado desde que se enquadre no período
 de tempo selecionado.</p>
@@ -2228,8 +2227,8 @@ Attributes:
        &#x27;2020-10-15T00:00:00.000000000&#x27;, &#x27;2020-10-31T00:00:00.000000000&#x27;,
        &#x27;2020-11-16T00:00:00.000000000&#x27;, &#x27;2020-12-02T00:00:00.000000000&#x27;,
        &#x27;2020-12-18T00:00:00.000000000&#x27;, &#x27;2021-01-01T00:00:00.000000000&#x27;],
-      dtype=&#x27;datetime64[ns]&#x27;)</pre></div></li></ul></div></li><li class='xr-section-item'><input id='section-2fd06a13-2540-4b57-87eb-c62a69ac3df6' class='xr-section-summary-in' type='checkbox'  checked><label for='section-2fd06a13-2540-4b57-87eb-c62a69ac3df6' class='xr-section-summary' >Attributes: <span>(2)</span></label><div class='xr-section-inline-details'></div><div class='xr-section-details'><dl class='xr-attrs'><dt><span>longitude :</span></dt><dd>-45.7422561</dd><dt><span>latitude :</span></dt><dd>-23.2508317</dd></dl></div></li></ul></div></div><p>Com este dado repurado podemos visualizar uma série temporal em gráfico
-com o <code class="docutils literal notranslate"><span class="pre">matplotlib</span></code> conforme se segue:</p>
+      dtype=&#x27;datetime64[ns]&#x27;)</pre></div></li></ul></div></li><li class='xr-section-item'><input id='section-2fd06a13-2540-4b57-87eb-c62a69ac3df6' class='xr-section-summary-in' type='checkbox'  checked><label for='section-2fd06a13-2540-4b57-87eb-c62a69ac3df6' class='xr-section-summary' >Attributes: <span>(2)</span></label><div class='xr-section-inline-details'></div><div class='xr-section-details'><dl class='xr-attrs'><dt><span>longitude :</span></dt><dd>-45.7422561</dd><dt><span>latitude :</span></dt><dd>-23.2508317</dd></dl></div></li></ul></div></div><p>Com este dado recuperado podemos visualizar uma série temporal por meio
+de um gráfico usando a biblioteca <code class="docutils literal notranslate"><span class="pre">matplotlib</span></code>, conforme a seguir:</p>
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">x</span> <span class="o">=</span> <span class="n">time_series</span><span class="o">.</span><span class="n">time</span>
 <span class="n">y</span> <span class="o">=</span> <span class="n">time_series</span>
 
@@ -2281,10 +2280,12 @@ tópicos a seguir:</p>
 </div>
 <p>Com o pacote <em>EOCube</em> é permitido calcular alguns índices espectrais
 como o NDVI para o município selecionado no dia 16 de agosto em 2018.</p>
-<p>Com este índice é possível visualizar as áreas que apresentam maiores
-índices de vegetação, e neste caso de uso pode-se observar a área
-degradada pela queimada em duas datas diferentes para o mês de agosto de
-2019.</p>
+<p>Com o pacote <em>EOCube</em> foi calculado o índice espectral NDVI para o
+município selecionado no dia 16 de agosto em 2018, conforme apresentado
+no plot abaixo. Com este índice é possível visualizar as áreas que
+apresentam maiores índices de vegetação e neste caso de uso, pode-se
+observar a área degradada pela queimada em duas datas diferentes para o
+mês de agosto de 2019.</p>
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%%time</span>
 <span class="n">ndvi</span> <span class="o">=</span> <span class="n">eocube_service</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="s1">&#39;ndvi&#39;</span><span class="p">)</span>
 
@@ -2348,11 +2349,11 @@ anterior.</p>
 <em>EOCube</em> apresentado, permite à comunidade científica o acesso, a
 recuperação e a visualização de dados de uso e cobertura da Terra.</p>
 <p>Os estudos de caso apresentaram resultados satisfatórios em relação a
-proposta do pacote pela criação de cubos de dados para áreas do
-território brasileiro, realizando a análise através do tempo. Como
-proposta para trabalhos futuros, as sugestões são aprimorar o pacote
-<em>EOCube</em> por meio do desenvolvimento de novas funcionalidades como a
-programação paralela e a estruturação dos dados.</p>
+proposta do pacote de criação de cubos de dados para áreas do território
+brasileiro, realizando a análise através do tempo. Como proposta para
+trabalhos futuros, as sugestões são aprimorar o pacote <em>EOCube</em> por meio
+do desenvolvimento de novas funcionalidades como a programação paralela
+e a estruturação dos dados.</p>
 </div>
 </div>
 

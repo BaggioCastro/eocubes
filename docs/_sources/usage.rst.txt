@@ -29,15 +29,14 @@ Para iniciar nosso estudo de caso precisando importar as bibliotecas
 necessárias como a ``matplotlib`` para visualizar os dados de forma
 gráfica e customizar a visualização das imagens.
 
-Logo, importanmos a biblioteca ``DataCube`` do pacote *EOCube*
-juntamente com a biblioteca ``info`` para o retorno das informações do
-*STAC* e a bibloteca ``config`` para configurar nossas variáveis de
-ambiente.
+Logo, importamos a biblioteca ``DataCube`` do pacote *EOCube* juntamente
+com a biblioteca ``info`` para o retorno das informações do *STAC* e a
+bibloteca ``config`` para configurar nossas variáveis de ambiente.
 
 Como utilizaremos o serviço *STAC* do Projeto *Brazil Data Cube - BDC*
 não necessitamos alterar o ``config.STAC_URL`` para outros servidores.
 
-Então vamos inserir o *token* de acesso adiquirido pelo *site* de
+Então vamos inserir o *token* de acesso adquirido pelo *site* de
 autenticação `BDC
 Auth <https://brazildatacube.dpi.inpe.br/auth/v1/auth/login>`__ do
 projeto *BDC*.
@@ -770,14 +769,14 @@ latitudes, onde:
 
 **Observação:** O formato segue o padrão: bbox = [min Longitude , min
 Latitude , max Longitude , max Latitude]. As coordenadas acima podem ser
-adiquiridas utilizando a ferramenta *online* para visualização dos
-cubos, o `Portal do Projeto Brazil Data
+adquiridas utilizando a ferramenta *online* para visualização dos cubos,
+o `Portal do Projeto Brazil Data
 Cube <http://brazildatacube.dpi.inpe.br/portal/explore>`__.
 
 Filtros de entrada
 ^^^^^^^^^^^^^^^^^^
 
-Para fins de testagem utilizaremos os seguintes parâmetros:
+Para fins de teste utilizaremos os seguintes parâmetros:
 
 -  **Collection**: CBERS-4 - AWFI - Cube Stack 16 days - v001;
 -  **Bands**: Red, Green, Blue e NIR (Near Infra-red);
@@ -789,14 +788,14 @@ Para este primeiro estudo de caso utilizaremos uma área de estudo
 referente ao município de São José dos Campos.
 
 Podemos conferir se estes atributos estão de acordo com a resposta
-retornada acima e com os filtro definidos vamos conferir a documentação
+retornada acima e com os filtros definidos vamos conferir a documentação
 para a biblioteca ``DataCube``:
 
 .. code:: ipython3
 
     DataCube?
 
-Com o retorno podemos verifirar a colocação e a nomeclatura das
+Com o retorno podemos verificar a colocação e a nomeclatura das
 variavéis e criar nosso cubo de dados de exemplo com base nesta
 informação:
 
@@ -822,10 +821,10 @@ informação:
 Operações com o Cubo de dados
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Primeiramente com o cubo de dados criado podemos executar os métodos
-listados anteriormente na documentação da biblioteca.
+Primeiramente, com o cubo de dados criado, podemos executar os métodos
+listados na documentação da biblioteca.
 
-Vamos primeiro visualizar os dados adiquiridos em forma de imagems em
+Vamos primeiro visualizar os dados adquiridos em forma de imagems em
 composição colorida.
 
 Para este método é essencial a existência das bandas *Red*, *Green* e
@@ -1741,7 +1740,7 @@ Séries temporais
 
 Por meio de um cubo de dados podemos visualizar uma série temporal com
 base nas mudanças que um determinado ponto no mapa (na área de
-interesse) sovreu durante um certo período de tempo.
+interesse) sofreu durante um certo período de tempo.
 
 Para este método também é possivel visualizar a documentação para
 inferir um período de tempo customizado desde que se enquadre no período
@@ -2155,8 +2154,8 @@ Há um exemplo de uso abaixo:
 
 
 
-Com este dado repurado podemos visualizar uma série temporal em gráfico
-com o ``matplotlib`` conforme se segue:
+Com este dado recuperado podemos visualizar uma série temporal por meio
+de um gráfico usando a biblioteca ``matplotlib``, conforme a seguir:
 
 .. code:: ipython3
 
@@ -2221,10 +2220,12 @@ tópicos a seguir:
 Com o pacote *EOCube* é permitido calcular alguns índices espectrais
 como o NDVI para o município selecionado no dia 16 de agosto em 2018.
 
-Com este índice é possível visualizar as áreas que apresentam maiores
-índices de vegetação, e neste caso de uso pode-se observar a área
-degradada pela queimada em duas datas diferentes para o mês de agosto de
-2019.
+Com o pacote *EOCube* foi calculado o índice espectral NDVI para o
+município selecionado no dia 16 de agosto em 2018, conforme apresentado
+no plot abaixo. Com este índice é possível visualizar as áreas que
+apresentam maiores índices de vegetação e neste caso de uso, pode-se
+observar a área degradada pela queimada em duas datas diferentes para o
+mês de agosto de 2019.
 
 .. code:: ipython3
 
@@ -2310,8 +2311,8 @@ Por fim, cabe ressaltar que o projeto de desenvolvimento do pacote
 recuperação e a visualização de dados de uso e cobertura da Terra.
 
 Os estudos de caso apresentaram resultados satisfatórios em relação a
-proposta do pacote pela criação de cubos de dados para áreas do
-território brasileiro, realizando a análise através do tempo. Como
-proposta para trabalhos futuros, as sugestões são aprimorar o pacote
-*EOCube* por meio do desenvolvimento de novas funcionalidades como a
-programação paralela e a estruturação dos dados.
+proposta do pacote de criação de cubos de dados para áreas do território
+brasileiro, realizando a análise através do tempo. Como proposta para
+trabalhos futuros, as sugestões são aprimorar o pacote *EOCube* por meio
+do desenvolvimento de novas funcionalidades como a programação paralela
+e a estruturação dos dados.
