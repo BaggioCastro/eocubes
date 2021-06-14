@@ -24,7 +24,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import requests
 import stac
-import wtss
 import xarray as xr
 from dask import delayed
 from ipywidgets import interact
