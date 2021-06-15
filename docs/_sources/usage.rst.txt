@@ -1,12 +1,3 @@
-..
-    This file is part of Python Client Library for Earth Observation Data Cube.
-    Copyright (C) 2021 None.
-
-    Python Client Library for Earth Observation Data Cube is free software;
-    You can redistribute it and/or modify it under the terms of the MIT License;
-    See LICENSE file for more details.
-
-=====================
 Usando a API - EOCube
 =====================
 
@@ -835,14 +826,27 @@ Podemos visualizar qualquer uma das bandas selecionadas ou calcular os
 índices espectrais cujo cálculo possua as bandas selecionadas como na
 imagem a seguir:
 
+.. raw:: html
+
+   <p align="center">
+
+.. raw:: html
+
+   </p>
+
+O método ``interactPlot`` retorna uma visualização interativa para o
+``jupyter notebook``:
+
 .. code:: ipython3
 
     eodatacube.interactPlot("rgb") # "ndvi", "ndwi" ou qualquer outra banda selecionada
 
-O método ``interactPlot`` retorna uma visualização interativa para o
-``jupyter notebook``.
 
-.. image:: ./assets/img/interact_plot.png
+
+.. parsed-literal::
+
+    interactive(children=(Dropdown(description='date', options=(datetime.datetime(2018, 10, 16, 0, 0), datetime.da…
+
 
 Podemos também visualizar uma banda em uma data específica para fins de
 amostragem.
@@ -1303,13 +1307,13 @@ duas reflectâncias, sendo expresso matematicamente como:
 :math:`NDVI = \frac{NIR - RED}{NIR + RED}`
 
 Para geração dos índices espectrais (NDVI, NDWI e NDBI) foi construído
-um módulo, chamado indices.py. Este módulo contém as seguintes funções:
+um módulo, chamado spectral.py. Este módulo contém as seguintes funções:
 
--  **calculo_ndvi(nir, red, cte_delta=1e-10)**
+-  **_ndvi(nir, red, cte_delta=1e-10)**
 
--  **calculo_ndwi(nir, green, cte_delta=1e-10)**
+-  **_ndwi(nir, green, cte_delta=1e-10)**
 
--  **calculo_ndbi(nir, swir1, cte_delta=1e-10)**
+-  **_ndbi(nir, swir1, cte_delta=1e-10)**
 
 Uma constante foi criada para fazer uma adição no denominador de ambos
 os cálculos dos índices espectrais. Por padrão, esta constante foi

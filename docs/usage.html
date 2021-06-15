@@ -49,7 +49,7 @@
     <link rel="author" title="About these documents" href="about.html" />
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="History" href="history.html" />
+    <link rel="next" title="Históry" href="history.html" />
     <link rel="prev" title="Instalação" href="install.html" /> 
 </head>
 
@@ -116,7 +116,7 @@
 <li class="toctree-l2"><a class="reference internal" href="#conclusao">Conclusão</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="history.html">History</a></li>
+<li class="toctree-l1"><a class="reference internal" href="history.html">Históry</a></li>
 </ul>
 <p class="caption"><span class="caption-text">Additional Notes</span></p>
 <ul>
@@ -183,7 +183,7 @@
   
   <div class="rst-breadcrumbs-buttons" role="navigation" aria-label="breadcrumb navigation">
       
-        <a href="history.html" class="btn btn-neutral float-right" title="History" accesskey="n">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="history.html" class="btn btn-neutral float-right" title="Históry" accesskey="n">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
       
       
         <a href="install.html" class="btn btn-neutral float-left" title="Instalação" accesskey="p"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
@@ -971,12 +971,14 @@ bandas não estejam na busca acarretará em um erro ou <em>Exception</em>.</p>
 <p>Podemos visualizar qualquer uma das bandas selecionadas ou calcular os
 índices espectrais cujo cálculo possua as bandas selecionadas como na
 imagem a seguir:</p>
+<p align="center"></p><p>O método <code class="docutils literal notranslate"><span class="pre">interactPlot</span></code> retorna uma visualização interativa para o
+<code class="docutils literal notranslate"><span class="pre">jupyter</span> <span class="pre">notebook</span></code>:</p>
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">eodatacube</span><span class="o">.</span><span class="n">interactPlot</span><span class="p">(</span><span class="s2">&quot;rgb&quot;</span><span class="p">)</span> <span class="c1"># &quot;ndvi&quot;, &quot;ndwi&quot; ou qualquer outra banda selecionada</span>
 </pre></div>
 </div>
-<p>O método <code class="docutils literal notranslate"><span class="pre">interactPlot</span></code> retorna uma visualização interativa para o
-<code class="docutils literal notranslate"><span class="pre">jupyter</span> <span class="pre">notebook</span></code>.</p>
-<img alt="_images/interact_plot.png" src="_images/interact_plot.png" />
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>interactive(children=(Dropdown(description=&#39;date&#39;, options=(datetime.datetime(2018, 10, 16, 0, 0), datetime.da…
+</pre></div>
+</div>
 <p>Podemos também visualizar uma banda em uma data específica para fins de
 amostragem.</p>
 <p>Por exemplo, queremos visualizar a banda espectral <em>Near Infra Red -
@@ -1409,11 +1411,11 @@ infravermelho próximo (NIR) e do vermelho (RED), dividida pela soma das
 duas reflectâncias, sendo expresso matematicamente como:</p>
 <p><span class="math notranslate nohighlight">\(NDVI = \frac{NIR - RED}{NIR + RED}\)</span></p>
 <p>Para geração dos índices espectrais (NDVI, NDWI e NDBI) foi construído
-um módulo, chamado indices.py. Este módulo contém as seguintes funções:</p>
+um módulo, chamado spectral.py. Este módulo contém as seguintes funções:</p>
 <ul class="simple">
-<li><p><strong>calculo_ndvi(nir, red, cte_delta=1e-10)</strong></p></li>
-<li><p><strong>calculo_ndwi(nir, green, cte_delta=1e-10)</strong></p></li>
-<li><p><strong>calculo_ndbi(nir, swir1, cte_delta=1e-10)</strong></p></li>
+<li><p><strong>_ndvi(nir, red, cte_delta=1e-10)</strong></p></li>
+<li><p><strong>_ndwi(nir, green, cte_delta=1e-10)</strong></p></li>
+<li><p><strong>_ndbi(nir, swir1, cte_delta=1e-10)</strong></p></li>
 </ul>
 <p>Uma constante foi criada para fazer uma adição no denominador de ambos
 os cálculos dos índices espectrais. Por padrão, esta constante foi
@@ -2363,7 +2365,7 @@ e a estruturação dos dados.</p>
           </div>
           <footer>
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
-        <a href="history.html" class="btn btn-neutral float-right" title="History" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="history.html" class="btn btn-neutral float-right" title="Históry" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
         <a href="install.html" class="btn btn-neutral float-left" title="Instalação" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
     </div>
 
