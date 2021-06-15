@@ -265,9 +265,13 @@ class DataCube():
             _data = []
             for band in _bands:
                 d = self.data_array.loc[band].values
-                _data.append(d)
-                _y = list(range(0, d.values.shape[1]))
-                _x = list(range(0, d.values.shape[2]))
+                values = []
+                for i in range(len(d)):
+                    raster = d[i].compute()
+                    values.append(raster)
+                    _x = list(range(0, raster.shape[1]))
+                    _y = list(range(0, raster.shape[0]))
+                _data.append(values)
             result = xr.DataArray(
                 np.array(_data),
                 coords=[_bands, _timeline,_y, _x],
