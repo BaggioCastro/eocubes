@@ -120,7 +120,7 @@ class Spectral():
         return array_rgb
 
     def _format(self, matrix):
-        """Preprocessing matrix formating all data to float
+        """Preprocessing matrix formating all data to float.
 
         Parameters
 

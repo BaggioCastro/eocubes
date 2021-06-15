@@ -17,12 +17,10 @@ the Free Software Foundation; either version 2 of the License, or (at your optio
 """
 
 import datetime
-import json
 import warnings
 
 import matplotlib.pyplot as plt
 import numpy as np
-import requests
 import stac
 import xarray as xr
 from dask import delayed
