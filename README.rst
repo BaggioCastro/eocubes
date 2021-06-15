@@ -67,7 +67,7 @@ O pacote *EOCube* permite que o usuário realize buscas por imagens de sensoriam
 
 Com a definição dos parâmetros, o pacote envia uma requisição para o serviço STAC. Este serviço retorna um conjunto de informações com os endereços de acesso das imagens, feito isso o pacote organiza estes dados em uma estrutura indexada com atributos espaço temporais utilizando a biblioteca *Dask Delayed* e *Xarray*.
 
-O retornado ao usuário consiste em um objeto, o qual é possível solicitar a visualização dos dados em imagens ou em matrizes, permitindo a busca centralizada no conjunto total ou o retorno do mesmo. Com este conjunto de dados, o usuário pode recuperar séries temporais e calcular índices espectrais como *Normalized Difference Vegetation Index* (NDVI), *Normalized Difference Water Index* (NDWI), *Normalized Difference Built-up Index* (NDBI) e o cálculo da composição colorida da imagens.
+Com o objeto que foi retornado ao usuário é possível solicitar a visualização dos dados em imagens ou em matrizes, permitindo a busca centralizada no conjunto total ou o retorno do mesmo. Com este conjunto de dados, o usuário pode recuperar séries temporais e calcular índices espectrais como *Normalized Difference Vegetation Index* (NDVI), *Normalized Difference Water Index* (NDWI), *Normalized Difference Built-up Index* (NDBI) e o cálculo da composição colorida da imagens.
 
 Em relação ao código fonte do pacote, as classes foram organizadas conforme é apresentado na Figura abaixo. A classe de configuração "*Config*" armazena os endereços para o serviço STAC, o código de acesso do usuário e o arquivo de busca de informações "*Info*". O arquivo "*Info*" possui uma abstração capaz de retornar uma listas com as coleções disponíveis e suas respectivas descrições.
 
