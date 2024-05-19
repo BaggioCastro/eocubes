@@ -52,12 +52,11 @@ install_requires = [
     'pandas>=1.1',
     'requests>=2',
     'xarray>=0.18.2',
-    'stac.py>=0.9',
+    'pystac_client>=0.3',
     'pyproj',
     'dask',
     'rasterio'    
 ]
-
 packages = find_packages()
 
 g = {}

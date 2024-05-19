@@ -21,10 +21,11 @@ import warnings
 
 import matplotlib.pyplot as plt
 import numpy as np
-import stac
+import pystac_client
 import xarray as xr
 from dask import delayed
 from ipywidgets import interact
+import re
 
 from eocube import config
 
@@ -80,11 +81,11 @@ class DataCube():
 
         self.utils = Utils()
 
-        self.stac_client = stac.STAC(
+        parameters = dict(access_token=config.ACCESS_TOKEN)
+        self.stac_client = pystac_client.Client.open(
             config.STAC_URL,
-            access_token=config.ACCESS_TOKEN
+            parameters= parameters
         )
-
         if not collections:
             raise AttributeError("Please insert a list of available collections!")
         else:
@@ -116,33 +117,37 @@ class DataCube():
         self.timeline = []
         self.data_images = {}
         self.data_array = None
+        self.stac_client.add_conforms_to("ITEM_SEARCH")
+        self.stac_client.add_conforms_to("QUERY")
 
         items = None
         try:
             # arazenar a query globalmente para utilizar os parametros de bounding box
             # e data inicial e final
-            items = self.stac_client.search({
-                'collections': self.collections,
-                'bbox': self.bbox,
-                'datetime': f'{self.start_date}/{self.end_date}',
-                'limit': limit
-            })
+            item_search = self.stac_client.search(
+                collections = self.collections,
+                bbox= self.bbox,
+                datetime= f'{self.start_date}/{self.end_date}',
+                limit= limit
+            )
+
+            pattern = re.compile(r"_(\d{6})_\d{8}$")
+            items_aux = list(item_search.items())
+            unique_numbers = list(np.unique([pattern.findall(item.id)[0] for item in items_aux]))
+            items = [[item for item in items_aux if re.search(fr"_{tile}_", item.id)] for tile in unique_numbers]
         except:
             raise RuntimeError("Connection refused!")
 
         images = []
         if items:
             # Cria uma lista de objetos Images com os items no STAC
-            for item in items.features:
+            for item in items[0]:
                 bands = {}
-                available_bands = item.get('properties').get('eo:bands')
+                available_bands = item.properties.get('eo:bands')
                 for band in available_bands:
-                    band_common_name = str(band.get('common_name', ''))
                     band_name = str(band.get('name'))
-                    # Cria um dicionário com cada chave sendo o nome comum da banda e o nome dado pelo item
-                    if band_common_name in self.query_bands:
-                        bands[band_common_name] = band.get('name')
-                    elif band_name in self.query_bands:
+                    # Cria um dicionário com cada chave sendo o nome dado pelo item
+                    if band_name in query_bands:
                         bands[band_name] = band_name
                 images.append(
                     Image(
@@ -185,8 +190,8 @@ class DataCube():
 
         self.description = {}
         for collection in self.collections:
-            response = self.stac_client.collections[collection]
-            self.description[str(response["id"])] = str(response["title"])
+            response = self.stac_client.get_collection(collection)
+            self.description[str(response.id)] = str(response.title)
 
         self.data_array = xr.DataArray(
             np.array(time_series),

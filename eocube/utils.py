@@ -125,3 +125,59 @@ class Utils():
             )
             x, y = rasterio.transform.rowcol(dataset.transform, coord[0], coord[1])
         return (x, y)
+    
+    @staticmethod
+    def safe_request(url: str, method: str = 'get', **kwargs) -> requests.Response:
+        """Query the given URL for any HTTP Request and handle minimal HTTP Exceptions.
+
+        :param url: The URL to query.
+        :param method: HTTP Method name.
+        :param kwargs: (optional) Any argument supported by `requests.request <https://docs.python-requests.org/en/latest/api/#requests.request>`_
+
+        :raise HTTPError - For any HTTP error related.
+        :raise ConnectionError - For any error related ConnectionError such InternetError
+
+        :rtype: requests.Response
+        """
+        try:
+            response = requests.request(method, url, **kwargs)
+
+            response.raise_for_status()
+
+            return response
+        except requests.exceptions.ConnectionError as e:
+            raise ConnectionError(f'(Connection Refused) {e.request.url}')
+        except requests.exceptions.HTTPError as e:
+            if e.response is None:
+                raise
+
+            reason = e.response.reason
+            msg = str(e)
+            if e.response.status_code == 403:
+                if e.request.headers.get('x-api-key') or 'access_token=' in e.request.url:
+                    msg = "You don't have permission to request this resource."
+                else:
+                    msg = 'Missing Authentication Token.'  # TODO: Improve this message for any STAC provider.
+            elif e.response.status_code == 500:
+                msg = 'Could not request this resource.'
+
+            raise requests.exceptions.HTTPError(f'({reason}) {msg}', request=e.request, response=e.response)
+
+    @staticmethod
+    def reproj_bbox(bbox,source_crs):
+        from pyproj import CRS
+        from pyproj import Transformer
+        bdc_crs = CRS.from_wkt('PROJCS["unknown",GEOGCS["unknown",DATUM["Unknown based on GRS80 ellipsoid",SPHEROID["GRS 1980",6378137,298.257222101,AUTHORITY["EPSG","7019"]]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]]],PROJECTION["Albers_Conic_Equal_Area"],PARAMETER["latitude_of_center",-12],PARAMETER["longitude_of_center",-54],PARAMETER["standard_parallel_1",-2],PARAMETER["standard_parallel_2",-22],PARAMETER["false_easting",5000000],PARAMETER["false_northing",10000000],UNIT["metre",1,AUTHORITY["EPSG","9001"]],AXIS["Easting",EAST],AXIS["Northing",NORTH]]')
+        inProj = CRS.from_epsg(source_crs)
+        outProj = CRS.from_user_input(bdc_crs)
+        transformer = Transformer.from_crs(inProj, outProj, always_xy=True)
+        
+        x1, y1, x2, y2 = bbox
+
+        x1_reproj, y1_reproj = transformer.transform(x1, y1)
+        x2_reproj, y2_reproj = transformer.transform(x2, y2)
+
+        # Retorna o bbox reprojetado
+        bbox_reproj = [x1_reproj, y1_reproj, x2_reproj, y2_reproj]
+        
+        return bbox_reproj

@@ -22,17 +22,20 @@ Methods:
     collections, describe
 """
 
-import stac
+import pystac_client
 
 from eocube import config
 
 
 def collections():
     """List all available collections from STAC."""
-    stac_client = stac.STAC(
-        config.STAC_URL,
-        access_token=config.ACCESS_TOKEN
-    )
+    parameters = dict(access_token=config.ACCESS_TOKEN)
+    stac_client = pystac_client.Client.open(
+            config.STAC_URL,
+            parameters= parameters
+        )
+    for collection in stac_client.get_collections():
+        print(collection)
     return stac_client
 
 def describe(collection):
@@ -42,8 +45,9 @@ def describe(collection):
 
      - collection <string, required>: the name of collection of interest listed in STAC.collections.
     """
-    stac_client = stac.STAC(
-        config.STAC_URL,
-        access_token=config.ACCESS_TOKEN
-    )
+    parameters = dict(access_token=config.ACCESS_TOKEN)
+    stac_client = pystac_client.Client.open(
+            config.STAC_URL,
+            parameters= parameters
+        )
     return stac_client.collections[collection]

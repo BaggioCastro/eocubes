@@ -22,6 +22,11 @@ import datetime
 from .spectral import Spectral
 from .utils import Utils
 
+import rasterio
+from rasterio.crs import CRS
+from rasterio.warp import transform
+from rasterio.windows import from_bounds
+
 
 class Image():
     """Abstraction to rasters files collected by STAC.py.
@@ -50,7 +55,7 @@ class Image():
         self.utils = Utils()
         self.spectral = Spectral()
         self.time = datetime.datetime.strptime(
-            item["properties"]["datetime"],
+            item.properties['datetime'],
             '%Y-%m-%dT%H:%M:%S'
         )
         self.item = item
@@ -61,7 +66,8 @@ class Image():
         """Get a list with available bands commom name."""
         return list(self.bands.keys())
 
-    def getBand(self, band):
+    def getBand(self, band_name,crs=None):
+        from rasterio.windows import from_bounds, intersect
         """Get bands from STAC item using commom name for band.
 
         Parameters
@@ -73,10 +79,24 @@ class Image():
         Raise
 
          - ValueError: If the resquested key not exists.
+
         """
-        return self.item.read(
-            self.bands[band], bbox=self.bbox
-        )
+            # Check Authorization
+        _ = Utils.safe_request(self.item.assets[band_name].href, method='head')
+
+        source_crs = 4326
+        if crs:
+            source_crs = CRS.from_string(crs)
+
+        with rasterio.open(self.item.assets[band_name].href) as dataset:
+            if self.bbox:
+                new_bbox = Utils.reproj_bbox(self.bbox,source_crs)
+                window = from_bounds(*new_bbox, dataset.transform)
+
+            asset = dataset.read(1, window=window)
+            
+    
+        return asset
 
     def getNDVI(self):
         """Calculate the Normalized Difference Vegetation Index - NDVI by image colected values.
@@ -86,8 +106,8 @@ class Image():
          - KeyError: If the required band does not exist.
         """
         return self.spectral._ndvi(
-            nir=self.getBand("nir"),
-            red=self.getBand("red")
+            nir=self.getBand("B08"),
+            red=self.getBand("B04")
         )
 
     def getNDWI(self):
@@ -98,8 +118,8 @@ class Image():
          - KeyError: If the required band does not exist.
         """
         return self.spectral._ndwi(
-            nir=self.getBand("nir"),
-            green=self.getBand("green")
+            nir=self.getBand("B08"),
+            green=self.getBand("B03")
         )
 
     def getNDBI(self):
@@ -110,8 +130,8 @@ class Image():
          - KeyError: If the required band does not exist.
         """
         return self.spectral._ndbi(
-            nir=self.getBand("nir"),
-            swir1=self.getBand("swir1")
+            nir=self.getBand("B08"),
+            swir1=self.getBand("B11")
         )
 
     def getRGB(self):
@@ -122,9 +142,9 @@ class Image():
          - KeyError: If the required band does not exist.
         """
         return self.spectral._rgb(
-            red=self.getBand("red"),
-            green=self.getBand("green"),
-            blue=self.getBand("blue")
+            red=self.getBand("B04"),
+            green=self.getBand("B03"),
+            blue=self.getBand("B02")
         )
 
     def _afimPointsToCoord(self, x, y, band):
