@@ -218,8 +218,6 @@ class DataCube:
             ts_data = np.array([computed_data[i:i+len(_timeline)] for i in range(0, len(computed_data), len(_timeline))])
             result = self.cube_to_time_series(ts_data, _bands, _timeline)
             
-            if interpolate:
-                [interpolate_mtx_numba(result[i].values,result[-1].values) for i,_ in enumerate(result[:-1])] 
         else:
             _data = np.array([computed_data[i:i+len(_timeline)] for i in range(0, len(computed_data), len(_timeline))])
             result = xr.DataArray(
