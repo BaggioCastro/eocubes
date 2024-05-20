@@ -35,7 +35,7 @@ from eocube import config
 
 from .image import Image
 from .spectral import Spectral
-from .utils import Utils,interpolate_mtx_numba
+from .utils import Utils
 from .api_check import *
 
 warnings.filterwarnings("ignore")
@@ -83,7 +83,6 @@ class DataCube:
         self.bbox = self._validate_bbox(bbox)
         self.start_date, self.end_date = self._validate_dates(start_date, end_date)
 
-        self.utils = Utils()
         self.stac_client = self._initialize_stac_client()
         self.stac_client.add_conforms_to("ITEM_SEARCH")
         self.stac_client.add_conforms_to("QUERY")
@@ -122,33 +121,23 @@ class DataCube:
                 datetime=f'{self.start_date}/{self.end_date}',
                 limit=limit
             )
-
+            items = list(item_search.items())
             pattern = re.compile(r"_(\d{6})_\d{8}$")
-            items_aux = list(item_search.items())
-            unique_numbers = list(np.unique([pattern.findall(item.id)[0] for item in items_aux]))
-            return [[item for item in items_aux if re.search(fr"_{tile}_", item.id)] for tile in unique_numbers]
+            unique_tiles = {pattern.findall(item.id)[0] for item in items}
+            return [[item for item in items if tile in item.id] for tile in unique_tiles]
         except Exception as e:
             logging.error("Failed to search STAC service.", exc_info=True)
             raise RuntimeError("Connection refused!") from e
+
 
     def _create_images_from_items(self, items):
         images = []
         if items:
             for item in items[0]:
-                bands = {}
-                available_bands = item.properties.get('eo:bands')
-                for band in available_bands:
-                    band_name = str(band.get('name'))
-                    if band_name in self.query_bands:
-                        bands[band_name] = band_name
-                images.append(
-                    Image(
-                        item=item,
-                        bands=bands,
-                        bbox=self.bbox
-                    )
-                )
+                bands = {band['name']: band['name'] for band in item.properties.get('eo:bands') if band['name'] in self.query_bands}
+                images.append(Image(item=item, bands=bands, bbox=self.bbox))
         return images
+
 
     def _build_data_array(self, images):
         x_data = {}
@@ -193,7 +182,7 @@ class DataCube:
 
     def search(self, 
            start_date: Optional[str] = None, end_date: Optional[str] = None,
-           as_time_series: bool = False,interpolate: bool = False):
+           as_time_series: bool = False):
         """Search method to retrieve data from delayed dataset and return all dataset for black searches but takes longer.
 
         Parameters:
@@ -419,48 +408,6 @@ class DataCube:
         result.attrs = self.description
         return result
 
-    def classifyDifference(self, band: str, start_date: str, end_date: str, limiar_min: float = 0, limiar_max: float = 0):
-        """Classify two different images with start and end date based on limiar mim and max.
-
-        Parameters:
-
-         - band <string, required>: The commom name of band (nir, ndvi, red, ... see info.collections).
-
-         - start_date <string, required>: The string start date formated "yyyy-mm-dd" to complete the interval.
-
-         - end_date <string, required>: The string end date formated "yyyy-mm-dd" to complete the interval and retrieve a dataset.
-
-         - limiar_min <float, required>: The minimum value classified to difference.
-
-         - limiar_max <float, required>: The maximum value classified to difference to complete the interval.
-
-        Raise:
-
-         - KeyError: If the given parameter not exists.
-        """
-        time_1 = self.nearTime(start_date)
-        data_1 = self.data_images[time_1].getBand(band)
-        time_2 = self.nearTime(end_date)
-        data_2 = self.data_images[time_2].getBand(band)
-        spectral = Spectral()
-        data_1 = spectral._format(data_1)
-        data_2 = spectral._format(data_2)
-        _data = None
-        if spectral._validate_shape(data_1, data_2):
-            diff = spectral._matrix_diff(data_1, data_2)
-            _data = spectral._classify_diff(diff, limiar_min=limiar_min, limiar_max=limiar_max)
-        else:
-            raise ValueError("Time 1 and 2 has different shapes!")
-        _timeline = [f"{time_1} - {time_2}"]
-        _x = list(range(0, _data.shape[1]))
-        _y = list(range(0, _data.shape[0]))
-        _result = xr.DataArray(
-            np.array([_data]),
-            coords=[_timeline, _y, _x],
-            dims=["time", "y", "x"],
-            name=["ClassifyDifference"]
-        )
-        return _result
 
     def interactPlot(self, method: str):
         """Return all dataset with a interactive plot date time slider.
