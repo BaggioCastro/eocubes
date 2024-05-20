@@ -67,7 +67,7 @@ class Image():
         return list(self.bands.keys())
 
     def getBand(self, band_name,crs=None):
-        from rasterio.windows import from_bounds, intersect
+        from rasterio.windows import from_bounds
         """Get bands from STAC item using commom name for band.
 
         Parameters
@@ -97,6 +97,8 @@ class Image():
             
     
         return asset
+    
+    
 
     def getNDVI(self):
         """Calculate the Normalized Difference Vegetation Index - NDVI by image colected values.

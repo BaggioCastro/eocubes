@@ -8,7 +8,7 @@ This abstraction uses STAC.py library provided by BDC Project.
 begin                : 2021-05-01
 git sha              : $Format:%H$
 copyright            : (C) 2020 by none
-email                : none@inpe.br
+email                : baggio.silva@inpe.br
 =======================================
 
 This program is free software.
@@ -23,131 +23,123 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pystac_client
 import xarray as xr
-from dask import delayed
+import logging
+from typing import List, Tuple, Dict, Optional
+from dask import delayed, compute
 from ipywidgets import interact
 import re
+from dask.distributed import Client
+
 
 from eocube import config
 
 from .image import Image
 from .spectral import Spectral
-from .utils import Utils
+from .utils import Utils,interpolate_mtx_numba
+from .api_check import *
 
 warnings.filterwarnings("ignore")
 
 
-class DataCube():
-    """Abstraction to create earth observation data cubes using images collected by STAC.py.
-    Create a data cube using images collected from STAC using Image abstration.
-
-    Parameters
-
-     - collections <list of strings, required>: The list with name of collections selected by user.
-
-     - query_bands <list of strings, required>: The list with commom name of bands (nir, ndvi, red, ... see info.collections).
-
-     - bbox <tupple, required>: The bounding box with user Area of Interest.
-
-     - start_date <string, required>: The string start date formated "yyyy-mm-dd" to complete the interval.
-
-     - end_date <string, required>: The string end date formated "yyyy-mm-dd" to complete the interval.
-
-     - limit <int, required>: The limit of response images in decreasing order.
-
+class DataCube:
+    """
+    Abstraction to create earth observation data cubes using images collected by STAC.py.
+    
+    Parameters:
+    - collections: List[str] - List of collection names selected by the user.
+    - query_bands: List[str] - List of common names of bands (e.g., nir, ndvi, red).
+    - bbox: Tuple[float, float, float, float] - Bounding box with the user's Area of Interest.
+    - start_date: str - Start date formatted as "yyyy-mm-dd".
+    - end_date: str - End date formatted as "yyyy-mm-dd".
+    - limit: int - Limit of response images in decreasing order.
+    
     Methods:
-
-        nearTime, search, getTimeSeries,
-        calculateNDVI, calculateNDBI, calculateNDWI, calculateColorComposition,
-        classifyDifference, interactPlot.
-
-    Raise
-
-     - AttributeError and ValueError: If a given parameter is not correctly formatted.
-
-     - RuntimeError: If the STAC service is unreachable caused by connection lost of client or service.
+    - nearTime
+    - search
+    - getTimeSeries
+    - calculateNDVI
+    - calculateNDBI
+    - calculateNDWI
+    - calculateColorComposition
+    - classifyDifference
+    - interactPlot
+    
+    Raises:
+    - AttributeError: If a parameter is not correctly formatted.
+    - ValueError: If the start date is greater than the end date or no data cube is created.
+    - RuntimeError: If the STAC service is unreachable due to connection issues.
     """
 
-    def __init__(self, collections=[], query_bands=[], bbox=(), start_date=None, end_date=None, limit=30):
-        """Build DataCube object with config parameters including access token, STAC url and earth observation service url."""
+    def __init__(self, collections: List[str], query_bands: List[str], bbox: Tuple[float, float, float, float], 
+                 start_date: str, end_date: str, limit: int = 30):
+        check_that(collections, msg="Please insert a list of available collections!")
+        check_that(query_bands, msg="Please insert a list of available bands with query_bands!")
+        check_that(bbox, msg="Please insert a bounding box parameter!")
 
-        if len(config.ACCESS_TOKEN) == 0:
-            config.ACCESS_TOKEN = input("Please insert a valid user token from BDC Auth: ")
-
-        if len(config.EOCUBE_URL) == 0:
-            config.EOCUBE_URL = input("Please insert a valid url for EO Service: ")
-
-        if len(config.STAC_URL) == 0:
-            config.STAC_URL = input("Please insert a valid url for STAC Service: ")
 
         self.utils = Utils()
+        self.collections = collections
+        self.query_bands = query_bands
+        self.bbox = self._validate_bbox(bbox)
+        self.start_date, self.end_date = self._validate_dates(start_date, end_date)
 
-        parameters = dict(access_token=config.ACCESS_TOKEN)
-        self.stac_client = pystac_client.Client.open(
-            config.STAC_URL,
-            parameters= parameters
-        )
-        if not collections:
-            raise AttributeError("Please insert a list of available collections!")
-        else:
-            self.collections = collections
-
-        if not query_bands:
-            raise AttributeError("Please insert a list of available bands with query_bands!")
-        else:
-            self.query_bands = query_bands
-
-        if not bbox:
-            raise AttributeError("Please insert a bounding box parameter!")
-        else:
-            valid = self.utils._validateBBOX(bbox)
-            if valid:
-                self.bbox = bbox
-
-        try:
-            _start_date = datetime.datetime.strptime(start_date, '%Y-%m-%d')
-            _end_date = datetime.datetime.strptime(end_date, '%Y-%m-%d')
-            if _end_date <= _start_date:
-                raise ValueError("Start date is greater than end date!")
-            else:
-                self.start_date = start_date
-                self.end_date = end_date
-        except:
-            raise AttributeError("Dates are not correctly formatted, should be %Y-%m-%d")
-
+        self.utils = Utils()
+        self.stac_client = self._initialize_stac_client()
+        self.stac_client.add_conforms_to("ITEM_SEARCH")
+        self.stac_client.add_conforms_to("QUERY")
         self.timeline = []
         self.data_images = {}
         self.data_array = None
-        self.stac_client.add_conforms_to("ITEM_SEARCH")
-        self.stac_client.add_conforms_to("QUERY")
 
-        items = None
+        
+
+        items = self._search_stac(limit)
+        images = self._create_images_from_items(items)
+
+        if not images:
+            raise ValueError("No data cube created!")
+
+        self.data_images, self.data_array = self._build_data_array(images)
+        self.description = self._get_collections_description()
+
+    def _initialize_stac_client(self):
+        parameters = dict(access_token=config.ACCESS_TOKEN)
+        return pystac_client.Client.open(config.STAC_URL, parameters=parameters)
+
+    def _validate_bbox(self, bbox):
+        check_bbox_format(bbox, msg="Invalid bounding box parameter!")
+        return bbox
+
+    def _validate_dates(self, start_date: str, end_date: str):
+        check_date_range(start_date, end_date)
+        return start_date, end_date
+
+    def _search_stac(self, limit: int):
         try:
-            # arazenar a query globalmente para utilizar os parametros de bounding box
-            # e data inicial e final
             item_search = self.stac_client.search(
-                collections = self.collections,
-                bbox= self.bbox,
-                datetime= f'{self.start_date}/{self.end_date}',
-                limit= limit
+                collections=self.collections,
+                bbox=self.bbox,
+                datetime=f'{self.start_date}/{self.end_date}',
+                limit=limit
             )
 
             pattern = re.compile(r"_(\d{6})_\d{8}$")
             items_aux = list(item_search.items())
             unique_numbers = list(np.unique([pattern.findall(item.id)[0] for item in items_aux]))
-            items = [[item for item in items_aux if re.search(fr"_{tile}_", item.id)] for tile in unique_numbers]
-        except:
-            raise RuntimeError("Connection refused!")
+            return [[item for item in items_aux if re.search(fr"_{tile}_", item.id)] for tile in unique_numbers]
+        except Exception as e:
+            logging.error("Failed to search STAC service.", exc_info=True)
+            raise RuntimeError("Connection refused!") from e
 
+    def _create_images_from_items(self, items):
         images = []
         if items:
-            # Cria uma lista de objetos Images com os items no STAC
             for item in items[0]:
                 bands = {}
                 available_bands = item.properties.get('eo:bands')
                 for band in available_bands:
                     band_name = str(band.get('name'))
-                    # Cria um dicionário com cada chave sendo o nome dado pelo item
-                    if band_name in query_bands:
+                    if band_name in self.query_bands:
                         bands[band_name] = band_name
                 images.append(
                     Image(
@@ -156,11 +148,9 @@ class DataCube():
                         bbox=self.bbox
                     )
                 )
+        return images
 
-        # Verifica se o cubo de dados foi criado com sucesso
-        if len(images) == 0:
-            raise ValueError("No data cube created!")
-
+    def _build_data_array(self, images):
         x_data = {}
         for image in images:
             date = image.time
@@ -168,123 +158,104 @@ class DataCube():
             x_data[date] = []
             for band in self.query_bands:
                 data = delayed(image.getBand)(band)
-                x_data[date].append({
-                    str(band): data
-                })
+                x_data[date].append({str(band): data})
 
         self.timeline = sorted(list(x_data.keys()))
 
         data_timeline = {}
-        for i in range(len(list(self.query_bands))):
+        for i in range(len(self.query_bands)):
             data_timeline[self.query_bands[i]] = []
             for time in self.timeline:
-                data_timeline[self.query_bands[i]].append(
-                    x_data[time][i][self.query_bands[i]]
-                )
+                data_timeline[self.query_bands[i]].append(x_data[time][i][self.query_bands[i]])
 
         time_series = []
         for band in self.query_bands:
-            time_series.append(
-                data_timeline[band]
-            )
+            time_series.append(data_timeline[band])
 
-        self.description = {}
+        return self.data_images, xr.DataArray(
+            np.array(time_series),
+            coords=[self.query_bands, self.timeline],
+            dims=["band", "time"],
+            name="DataCube"
+        )
+
+    def _get_collections_description(self):
+        description = {}
         for collection in self.collections:
             response = self.stac_client.get_collection(collection)
-            self.description[str(response.id)] = str(response.title)
+            description[str(response.id)] = str(response.title)
+        return description
 
-        self.data_array = xr.DataArray(
-            np.array(time_series),
-            coords=[self.query_bands, self.timeline], #, y, x],
-            dims=["band", "time"], #, "y", "x"],
-            name=["DataCube"]
-        )
-        self.data_array.attrs = self.description
-
-    def nearTime(self, time):
-        """Search in all dataset a date time near to given time.
-        Return a date time from dataset timeline.
-
-        Parameters
-
-         - time <datetime, required>: the given date time to search formated "yyyy-mm-dd".
-
-        Raise
-
-         - ValueError: If time is not correctly formatted.
-        """
-        _date = self.data_array.sel(time = time, method="nearest").time.values
-        _date = datetime.datetime.utcfromtimestamp(_date.tolist()/1e9)
+    def nearTime(self, time: str):
+        _date = self.data_array.sel(time=time, method="nearest").time.values
+        _date = datetime.datetime.utcfromtimestamp(_date.tolist() / 1e9)
         return _date
 
-    def search(self, band=None, time=None, start_date=None, end_date=None):
-        """Search method to retrieve data from delayed dataset and return all dataset for black searchs but takes longer.
+    def search(self, 
+           start_date: Optional[str] = None, end_date: Optional[str] = None,
+           as_time_series: bool = False,interpolate: bool = False):
+        """Search method to retrieve data from delayed dataset and return all dataset for black searches but takes longer.
 
         Parameters:
-
-         - band <string, optional>: The commom name of band (nir, ndvi, red, ... see info.collections).
-
-         - time <string, optional>: The given time to retrieve a sigle image formated "yyyy-mm-dd".
-
-         - start_date <string, optional>: The string start date formated "yyyy-mm-dd" to complete the interval.
-
-         - end_date <string, optional>: The string end date formated "yyyy-mm-dd" to complete the interval and retrieve a dataset.
+        - band <string, optional>: The common name of band (nir, ndvi, red, ... see info.collections).
+        - start_date <string, optional>: The string start date formatted "yyyy-mm-dd" to complete the interval.
+        - end_date <string, optional>: The string end date formatted "yyyy-mm-dd" to complete the interval and retrieve a dataset.
+        - as_time_series <bool, optional>: If True, return the result as a time series.
 
         Raise:
-
-         - KeyError: If the given parameter not exists.
+        - KeyError: If the given parameter does not exist.
         """
-        result = None
-        if start_date and end_date:
-            _start_date = self.nearTime(start_date)
-            _end_date = self.nearTime(end_date)
+        _start_date = self.nearTime(start_date) if start_date else self.nearTime(self.start_date)
+        _end_date = self.nearTime(end_date) if end_date else self.nearTime(self.end_date)
+        _bands = self.query_bands
+        _timeline = self.timeline
+
+        tasks = [self.data_array.loc[band, _start_date:_end_date].values for band in _bands]
+
+        computed_data = compute(*[item for sublist in tasks for item in sublist])
+        
+        if as_time_series:
+            ts_data = np.array([computed_data[i:i+len(_timeline)] for i in range(0, len(computed_data), len(_timeline))])
+            result = self.cube_to_time_series(ts_data, _bands, _timeline)
+            
+            if interpolate:
+                [interpolate_mtx_numba(result[i].values,result[-1].values) for i,_ in enumerate(result[:-1])] 
         else:
-            _start_date = self.nearTime(self.start_date)
-            _end_date = self.nearTime(self.end_date)
-        if band:
-            if time:
-                _date = self.nearTime(time)
-                _timeline = [_date]
-                _data = self.data_array.loc[band, _date].values.reshape(1)
-            else:
-                _data = self.data_array.loc[band, _start_date:_end_date]
-                _timeline = _data.time.values
-                _data = _data.values
-            _result = []
-            for raster in _data:
-                value = raster.compute()
-                _result.append(value)
-                _x = list(range(0, value.shape[1]))
-                _y = list(range(0, value.shape[0]))
+            _data = np.array([computed_data[i:i+len(_timeline)] for i in range(0, len(computed_data), len(_timeline))])
             result = xr.DataArray(
-                np.array(_result),
-                coords=[_timeline, _y, _x],
-                dims=["time", "y", "x"],
-                name=[f"ResultSearch_{band}"]
-            )
-        else:
-            _bands = self.query_bands
-            _timeline = self.timeline
-            _data = []
-            for band in _bands:
-                d = self.data_array.loc[band].values
-                values = []
-                for i in range(len(d)):
-                    raster = d[i].compute()
-                    values.append(raster)
-                    _x = list(range(0, raster.shape[1]))
-                    _y = list(range(0, raster.shape[0]))
-                _data.append(values)
-            result = xr.DataArray(
-                np.array(_data),
-                coords=[_bands, _timeline,_y, _x],
+                _data,
+                coords={"band": _bands, "time": _timeline, "y": range(_data.shape[2]), "x": range(_data.shape[3])},
                 dims=["band", "time", "y", "x"],
-                name=["DataCube"]
+                name="DataCube"
             )
-        result.attrs = self.description
+
+        result.attrs['product'] = self.description
         return result
 
-    def getTimeSeries(self, band=None, lon=None, lat=None, start_date=None, end_date=None):
+    def cube_to_time_series(self, data_array, bands, time_coords):
+        """Transform the data cube into a time series cube."""
+        y_dim, x_dim = data_array.shape[2], data_array.shape[3]
+        band_ts_list = []
+
+        for i, band in enumerate(bands):
+            band_data = data_array[i]
+            flattened_data = band_data.reshape(len(time_coords), -1).transpose(1, 0)
+            
+            ts_data = xr.DataArray(
+                flattened_data,
+                coords={"pixel": range(flattened_data.shape[0]), "time": time_coords, "band": band},
+                dims=["pixel", "time"],
+                name="TimeSeries"
+            )
+            band_ts_list.append(ts_data)
+        
+        combined_ts_data = xr.concat(band_ts_list, dim="band")
+        combined_ts_data.attrs['y_dim'] = y_dim
+        combined_ts_data.attrs['x_dim'] = x_dim
+
+        return combined_ts_data
+    
+    def getTimeSeries(self, band: str, lon: float, lat: float, start_date: Optional[str] = None, end_date: Optional[str] = None):
         """Get time series band values from a given point and timeline.
 
         Parameters:
@@ -450,7 +421,7 @@ class DataCube():
         result.attrs = self.description
         return result
 
-    def classifyDifference(self, band, start_date, end_date, limiar_min=0, limiar_max=0):
+    def classifyDifference(self, band: str, start_date: str, end_date: str, limiar_min: float = 0, limiar_max: float = 0):
         """Classify two different images with start and end date based on limiar mim and max.
 
         Parameters:
@@ -493,7 +464,7 @@ class DataCube():
         )
         return _result
 
-    def interactPlot(self, method):
+    def interactPlot(self, method: str):
         """Return all dataset with a interactive plot date time slider.
 
         Parameters:
