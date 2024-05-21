@@ -242,6 +242,78 @@ class DataCube:
 
         return combined_ts_data
     
+    def calculate_indices(self, cube, input_bands, formulas):
+        """
+        Calculates the desired spectral indices from the input data matrix using the given formulas.
+
+        Parameters:
+        -----------
+        cube : xarray.DataArray
+            The input data cube.
+        input_bands : list of str
+            The list of band names to be used for calculating the indices.
+        formulas : list of str
+            The list of formulas to be used for calculating the indices.
+
+        Returns:
+        --------
+        cube : xarray.DataArray
+            The updated data cube with the calculated indices.
+        """
+        if not isinstance(cube, xr.DataArray):
+            raise ValueError("cube must be an xarray.DataArray")
+
+        # Check for missing bands and download if necessary
+        missing_bands = [band for band in input_bands if band not in cube.coords["band"].values]
+        if missing_bands:
+            self._download_missing_bands(missing_bands)
+
+        # Calculate band values for the input matrix
+        band_values = {band: cube.sel(band=band).values for band in input_bands}
+
+        # Calculate the desired indices using the formulas
+        index_values = []
+        for formula in formulas:
+            try:
+                index_value = eval(formula, {}, band_values)
+                mask = (-1 <= index_value) & (index_value <= 1)
+                index_value = np.where(mask, index_value * 10000, index_value)
+            except NameError as e:
+                print(f"Error: {e}. Please check the input bands and formulas.")
+                return None
+            index_values.append(index_value)
+
+        # Combine the results into a final array
+        final_result = np.stack(index_values, axis=0).astype('int16')
+
+        # Create a new DataArray for the indices
+        if "pixel" in cube.coords:
+            indices_data_array = xr.DataArray(
+                final_result,
+                coords={"band": [f"index_{i}" for i in range(len(formulas))], "time": cube.coords["time"], "pixel": cube.coords["pixel"]},
+                dims=["band", "time", "pixel"],
+                name="SpectralIndices"
+            )
+        else:
+            indices_data_array = xr.DataArray(
+                final_result,
+                coords={"band": [f"index_{i}" for i in range(len(formulas))], "time": cube.coords["time"], "y": cube.coords["y"], "x": cube.coords["x"]},
+                dims=["band", "time", "y", "x"],
+                name="SpectralIndices"
+            )
+
+        # Append indices to the original cube
+        cube = xr.concat([cube, indices_data_array], dim="band")
+
+        # Update description
+        if "description" in cube.attrs:
+            cube.attrs["description"] += " + Spectral Indices"
+        else:
+            cube.attrs["description"] = "Spectral Indices"
+
+        return cube
+
+    
     def getTimeSeries(self, band: str, lon: float, lat: float, start_date: Optional[str] = None, end_date: Optional[str] = None):
         """Get time series band values from a given point and timeline.
 
@@ -306,107 +378,6 @@ class DataCube:
             "latitude": lat
         }
         return _result
-
-    def calculateNDVI(self, time):
-        """Calculate the Normalized Difference Vegetation Index - NDVI of a given period.
-
-        Parameters
-
-         - time <string, required>: The given time to retrieve a sigle image formated "yyyy-mm-dd".
-
-        Raise:
-
-         - KeyError: No data for given date time selected.
-        """
-        _date = self.nearTime(time)
-        _data = self.data_images[_date].getNDVI()
-        _timeline = [_date]
-        _x = list(range(0, _data.shape[1]))
-        _y = list(range(0, _data.shape[0]))
-        result = xr.DataArray(
-            np.array([_data]),
-            coords=[_timeline, _y, _x],
-            dims=["time", "y", "x"],
-            name=["ImageNDVI"]
-        )
-        result.attrs = self.description
-        return result
-
-    def calculateNDWI(self, time):
-        """Calculate the Normalized Difference Water Index - NDVI of a given period.
-
-        Parameters
-
-         - time <string, required>: The given time to retrieve a sigle image formated "yyyy-mm-dd".
-
-        Raise:
-
-         - KeyError: No data for given date time selected.
-        """
-        _date = self.nearTime(time)
-        _data = self.data_images[_date].getNDWI()
-        _timeline = [_date]
-        _x = list(range(0, _data.shape[1]))
-        _y = list(range(0, _data.shape[0]))
-        result = xr.DataArray(
-            np.array([_data]),
-            coords=[_timeline, _y, _x],
-            dims=["time", "y", "x"],
-            name=["ImageNDWI"]
-        )
-        result.attrs = self.description
-        return result
-
-    def calculateNDBI(self, time):
-        """Calculate the Normalized Difference Built-up Index - NDVI of a given period.
-
-        Parameters
-
-         - time <string, required>: The given time to retrieve a sigle image formated "yyyy-mm-dd".
-
-        Raise:
-
-         - KeyError: No data for given date time selected.
-        """
-        _date = self.nearTime(time)
-        _data = self.data_images[_date].getNDBI()
-        _timeline = [_date]
-        _x = list(range(0, _data.shape[1]))
-        _y = list(range(0, _data.shape[0]))
-        result = xr.DataArray(
-            np.array([_data]),
-            coords=[_timeline, _y, _x],
-            dims=["time", "y", "x"],
-            name=["ImageNDBI"]
-        )
-        result.attrs = self.description
-        return result
-
-    def calculateColorComposition(self, time):
-        """Calculate the color composition RGB of a given period.
-
-        Parameters
-
-         - time <string, required>: The given time to retrieve a sigle image formated "yyyy-mm-dd".
-
-        Raise:
-
-         - KeyError: No data for given date time selected.
-        """
-        _date = self.nearTime(time)
-        _data = self.data_images[_date].getRGB()
-        _timeline = [_date]
-        _x = list(range(0, _data.shape[1]))
-        _y = list(range(0, _data.shape[0]))
-        _rgb = ["red", "green", "blue"]
-        result = xr.DataArray(
-            np.array([_data]),
-            coords=[_timeline, _y, _x, _rgb],
-            dims=["time", "y", "x", "rgb"],
-            name=["ColorComposition"]
-        )
-        result.attrs = self.description
-        return result
 
 
     def interactPlot(self, method: str):
