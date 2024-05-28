@@ -70,8 +70,8 @@ class DataCube:
     - RuntimeError: If the STAC service is unreachable due to connection issues.
     """
 
-    def __init__(self, collections: List[str], query_bands: List[str], bbox: Tuple[float, float, float, float], 
-                 start_date: str, end_date: str, limit: int = 30):
+    def __init__(self, collections: List[str], query_bands: List[str], formulas: List[str],bbox: Tuple[float, float, float, float], 
+                 start_date: str, end_date: str, limit: int = 30, window: bool = False):
         check_that(collections, msg="Please insert a list of available collections!")
         check_that(query_bands, msg="Please insert a list of available bands with query_bands!")
         check_that(bbox, msg="Please insert a bounding box parameter!")
@@ -80,6 +80,7 @@ class DataCube:
         self.utils = Utils()
         self.collections = collections
         self.query_bands = query_bands
+        self.formulas = formulas
         self.bbox = self._validate_bbox(bbox)
         self.start_date, self.end_date = self._validate_dates(start_date, end_date)
 
@@ -93,13 +94,17 @@ class DataCube:
         
 
         items = self._search_stac(limit)
-        images = self._create_images_from_items(items)
+        images,bands_to_query = self._create_images_from_items(items)
+        self.query_bands = bands_to_query
 
         if not images:
             raise ValueError("No data cube created!")
 
-        self.data_images, self.data_array = self._build_data_array(images)
-        self.description = self._get_collections_description()
+        if window:
+            self.data_images, self.data_array = self._build_data_array_window(images)
+        else:
+            self.data_images, self.data_array = self._build_data_array(images)
+
 
     def _initialize_stac_client(self):
         parameters = dict(access_token=config.ACCESS_TOKEN)
@@ -129,16 +134,28 @@ class DataCube:
             logging.error("Failed to search STAC service.", exc_info=True)
             raise RuntimeError("Connection refused!") from e
 
+    def _extract_bands(self, formulas):
+        band_pattern = re.compile(r'B\d{2}')
+        return sorted(set(band_pattern.findall(' '.join(formulas))))
 
+    
     def _create_images_from_items(self, items):
         images = []
+        bands_to_query_set = set(self.query_bands) | set(self._extract_bands(self.formulas))
+
         if items:
             for item in items[0]:
-                bands = {band['name']: band['name'] for band in item.properties.get('eo:bands') if band['name'] in self.query_bands}
-                images.append(Image(item=item, bands=bands, bbox=self.bbox))
-        return images
+                available_bands = sorted([band['name'] for band in item.properties.get('eo:bands', [])])
+                bands_to_query = [band for band in available_bands if band in bands_to_query_set]
+             
+                if all(band in available_bands for band in bands_to_query_set):
+                    images.append(Image(item=item, bands=bands_to_query, bbox=self.bbox))
+                else:
+                    missing_bands = bands_to_query_set - set(available_bands)
+                    print(f"As seguintes bandas a serem consultadas não estão disponíveis no item: {missing_bands}")
 
-
+        return images, bands_to_query
+    
     def _build_data_array(self, images):
         x_data = {}
         for image in images:
@@ -147,6 +164,35 @@ class DataCube:
             x_data[date] = []
             for band in self.query_bands:
                 data = delayed(image.getBand)(band)
+                x_data[date].append({str(band): data})
+
+        self.timeline = sorted(list(x_data.keys()))
+
+        data_timeline = {}
+        for i in range(len(self.query_bands)):
+            data_timeline[self.query_bands[i]] = []
+            for time in self.timeline:
+                data_timeline[self.query_bands[i]].append(x_data[time][i][self.query_bands[i]])
+
+        time_series = []
+        for band in self.query_bands:
+            time_series.append(data_timeline[band])
+
+        return self.data_images, xr.DataArray(
+            np.array(time_series),
+            coords=[self.query_bands, self.timeline],
+            dims=["band", "time"],
+            name="DataCube"
+        )
+    
+    def _build_data_array_window(self, images):
+        x_data = {}
+        for image in images:
+            date = image.time
+            self.data_images[date] = image
+            x_data[date] = []
+            for band in self.query_bands:
+                data = delayed(image.getWindow)(band)
                 x_data[date].append({str(band): data})
 
         self.timeline = sorted(list(x_data.keys()))
@@ -181,8 +227,8 @@ class DataCube:
         return _date
 
     def search(self, 
-           start_date: Optional[str] = None, end_date: Optional[str] = None,
-           as_time_series: bool = False):
+               start_date: Optional[str] = None, end_date: Optional[str] = None,
+               as_time_series: bool = False):
         """Search method to retrieve data from delayed dataset and return all dataset for black searches but takes longer.
 
         Parameters:
@@ -190,35 +236,58 @@ class DataCube:
         - start_date <string, optional>: The string start date formatted "yyyy-mm-dd" to complete the interval.
         - end_date <string, optional>: The string end date formatted "yyyy-mm-dd" to complete the interval and retrieve a dataset.
         - as_time_series <bool, optional>: If True, return the result as a time series.
+        - formulas <list of string, optional>: Formulas to calculate additional indices.
 
         Raise:
         - KeyError: If the given parameter does not exist.
         """
-        _start_date = self.nearTime(start_date) if start_date else self.nearTime(self.start_date)
-        _end_date = self.nearTime(end_date) if end_date else self.nearTime(self.end_date)
+        _start_date = self.start_date
+        _end_date = self.end_date
         _bands = self.query_bands
         _timeline = self.timeline
+        _formulas = self.formulas
 
         tasks = [self.data_array.loc[band, _start_date:_end_date].values for band in _bands]
 
         computed_data = compute(*[item for sublist in tasks for item in sublist])
+
         
-        if as_time_series:
-            ts_data = np.array([computed_data[i:i+len(_timeline)] for i in range(0, len(computed_data), len(_timeline))])
-            result = self.cube_to_time_series(ts_data, _bands, _timeline)
+        
+        _data = np.array([computed_data[i:i+len(_timeline)] for i in range(0, len(computed_data), len(_timeline))])
+
+        bandas = _bands.copy()
+        if _formulas:
+            # Calcule os valores das bandas e armazene em band_values
+            band_values = {band: _data[idx] for idx, band in enumerate(_bands)}
             
+            # Calcule os índices desejados usando as fórmulas
+            index_values = []
+            for formula in _formulas:
+                try:
+                    index_value = eval(formula, band_values)
+                    index_values.append(index_value)
+                except NameError as e:
+                    print(f"Error: {e}. Please check the input bands and formulas.")
+                    return None
+            
+            # Combine os índices calculados ao array de dados original
+            index_data = np.stack(index_values, axis=0)
+            _data = np.concatenate((_data, index_data), axis=0)
+            bandas.extend([_formulas[i] for i in range(len(_formulas))])
+
+        if as_time_series:
+            result = self.cube_to_time_series(_data, bandas, _timeline)
         else:
-            _data = np.array([computed_data[i:i+len(_timeline)] for i in range(0, len(computed_data), len(_timeline))])
             result = xr.DataArray(
                 _data,
-                coords={"band": _bands, "time": _timeline, "y": range(_data.shape[2]), "x": range(_data.shape[3])},
+                coords={"band": bandas, "time": _timeline, "y": range(_data.shape[2]), "x": range(_data.shape[3])},
                 dims=["band", "time", "y", "x"],
                 name="DataCube"
             )
 
-        result.attrs['product'] = self.description
+        #result.attrs['product'] = self.description
         return result
-
+    
     def cube_to_time_series(self, data_array, bands, time_coords):
         """Transform the data cube into a time series cube."""
         y_dim, x_dim = data_array.shape[2], data_array.shape[3]
