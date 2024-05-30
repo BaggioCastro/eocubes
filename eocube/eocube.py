@@ -226,7 +226,7 @@ class DataCube:
         _date = datetime.datetime.utcfromtimestamp(_date.tolist() / 1e9)
         return _date
 
-     def search(self, 
+    def search(self, 
                start_date: Optional[str] = None, end_date: Optional[str] = None,
                as_time_series: bool = False):
         """Search method to retrieve data from delayed dataset and return all dataset for black searches but takes longer.
