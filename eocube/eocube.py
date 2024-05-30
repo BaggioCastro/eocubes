@@ -69,20 +69,31 @@ class DataCube:
     - ValueError: If the start date is greater than the end date or no data cube is created.
     - RuntimeError: If the STAC service is unreachable due to connection issues.
     """
+    #TODO concatenar janelas quando bbox intersecta 4 tiles
+    # cubo = eodatacube.search(tile = '028022')
+    # cubo2 = eodatacube.search(tile = '029022')
+    # cubo3 = eodatacube.search(tile = '028023')
+    # cubo4 = eodatacube.search(tile = '029023')
+    # result1 = xr.concat([cubo, cubo2], dim='x')
+    # result2 = xr.concat([cubo3, cubo4], dim='x')
+    # result = xr.concat([result1, result2], dim='y')
 
-    def __init__(self, collections: List[str], query_bands: List[str], formulas: List[str],bbox: Tuple[float, float, float, float], 
-                 start_date: str, end_date: str, limit: int = 30, window: bool = False):
+    def __init__(self, collections: List[str], query_bands: List[str], 
+                 start_date: str, end_date: str, limit: int = 30, window: bool = False, tiles: List[str] = None,bbox: Tuple[float, float, float, float] = None,formulas: List[str] = None ):
         check_that(collections, msg="Please insert a list of available collections!")
         check_that(query_bands, msg="Please insert a list of available bands with query_bands!")
-        check_that(bbox, msg="Please insert a bounding box parameter!")
+        #check_that(bbox, msg="Please insert a bounding box parameter!")
 
 
         self.utils = Utils()
         self.collections = collections
         self.query_bands = query_bands
         self.formulas = formulas
-        self.bbox = self._validate_bbox(bbox)
+        self.bbox = bbox
+        if self.bbox:
+            self.bbox = self._validate_bbox(bbox)
         self.start_date, self.end_date = self._validate_dates(start_date, end_date)
+        self.tiles = tiles
 
         self.stac_client = self._initialize_stac_client()
         self.stac_client.add_conforms_to("ITEM_SEARCH")
@@ -94,16 +105,28 @@ class DataCube:
         
 
         items = self._search_stac(limit)
-        images,bands_to_query = self._create_images_from_items(items)
-        self.query_bands = bands_to_query
+        self.xr_arrays = []
+        for item in items:
+            images,bands_to_query = self._create_images_from_items(item)
+            self.query_bands = bands_to_query
 
-        if not images:
-            raise ValueError("No data cube created!")
+            if not images:
+                raise ValueError("No data cube created!")
 
-        if window:
-            self.data_images, self.data_array = self._build_data_array_window(images)
-        else:
-            self.data_images, self.data_array = self._build_data_array(images)
+            if window:
+                self.data_images, self.data_array = self._build_data_array_window(images)
+            else:
+                self.data_images, self.data_array = self._build_data_array(images)
+
+            self.xr_arrays.append(self.data_array)
+        self.final_array = xr.concat(self.xr_arrays, dim = "tile")
+        del self.data_array
+
+    def __str__(self):
+        return self.final_array.coords
+
+    def __repr__(self):
+        return self.__str__()   
 
 
     def _initialize_stac_client(self):
@@ -118,17 +141,33 @@ class DataCube:
         check_date_range(start_date, end_date)
         return start_date, end_date
 
-    def _search_stac(self, limit: int):
+    def _search_stac(self, limit=100):
         try:
-            item_search = self.stac_client.search(
-                collections=self.collections,
-                bbox=self.bbox,
-                datetime=f'{self.start_date}/{self.end_date}',
-                limit=limit
-            )
+            # Decide se deve buscar por bbox ou tiles
+            if self.bbox:
+                # Busca usando bbox
+                item_search = self.stac_client.search(
+                    collections=self.collections,
+                    bbox=self.bbox,
+                    datetime=f'{self.start_date}/{self.end_date}',
+                    limit=limit
+                )
+            elif self.tiles:
+                # Busca usando query para tiles
+                item_search = self.stac_client.search(
+                    query={"bdc:tile": {"in": self.tiles}},
+                    datetime=f'{self.start_date}/{self.end_date}',
+                    collections=self.collections,
+                    limit=limit
+                )
+            else:
+                # Retorna uma mensagem de erro ou lança uma exceção se nem bbox nem tiles forem fornecidos
+                raise ValueError("Either 'bbox' or 'tiles' must be specified for searching.")
+            
+            # Processa os resultados da busca
             items = list(item_search.items())
             pattern = re.compile(r"_(\d{6})_\d{8}$")
-            unique_tiles = {pattern.findall(item.id)[0] for item in items}
+            unique_tiles = sorted({pattern.findall(item.id)[0] for item in items if pattern.findall(item.id)})
             return [[item for item in items if tile in item.id] for tile in unique_tiles]
         except Exception as e:
             logging.error("Failed to search STAC service.", exc_info=True)
@@ -141,10 +180,13 @@ class DataCube:
     
     def _create_images_from_items(self, items):
         images = []
-        bands_to_query_set = set(self.query_bands) | set(self._extract_bands(self.formulas))
+        if self.formulas:
+            bands_to_query_set = set(self.query_bands) | set(self._extract_bands(self.formulas))
+        else:
+            bands_to_query_set = set(self.query_bands)
 
         if items:
-            for item in items[0]:
+            for item in items:
                 available_bands = sorted([band for band in list(item.assets.keys())])
                 bands_to_query = [band for band in available_bands if band in bands_to_query_set]
              
@@ -167,6 +209,7 @@ class DataCube:
                 x_data[date].append({str(band): data})
 
         self.timeline = sorted(list(x_data.keys()))
+        self.tiles = image.tile
 
         data_timeline = {}
         for i in range(len(self.query_bands)):
@@ -180,7 +223,7 @@ class DataCube:
 
         return self.data_images, xr.DataArray(
             np.array(time_series),
-            coords=[self.query_bands, self.timeline],
+            coords={"band": self.query_bands, "time": self.timeline, "tile":  self.tiles},
             dims=["band", "time"],
             name="DataCube"
         )
@@ -196,6 +239,7 @@ class DataCube:
                 x_data[date].append({str(band): data})
 
         self.timeline = sorted(list(x_data.keys()))
+         
 
         data_timeline = {}
         for i in range(len(self.query_bands)):
@@ -207,12 +251,15 @@ class DataCube:
         for band in self.query_bands:
             time_series.append(data_timeline[band])
 
-        return self.data_images, xr.DataArray(
+        d_array = xr.DataArray(
             np.array(time_series),
             coords=[self.query_bands, self.timeline],
             dims=["band", "time"],
             name="DataCube"
         )
+        
+        d_array.coords['tile'] = image.time
+        return self.data_images, d_array
 
     def _get_collections_description(self):
         description = {}
@@ -228,7 +275,7 @@ class DataCube:
 
     def search(self, 
                start_date: Optional[str] = None, end_date: Optional[str] = None,
-               as_time_series: bool = False):
+               as_time_series: bool = False, tile: Optional[str] = None):
         """Search method to retrieve data from delayed dataset and return all dataset for black searches but takes longer.
 
         Parameters:
@@ -247,20 +294,27 @@ class DataCube:
         _timeline = self.timeline
         _formulas = self.formulas
 
+        if tile:
+            self.data_array = self.final_array.sel(tile = tile)
+        else:
+            self.data_array = self.final_array.isel(tile = 0)
+
         tasks = [self.data_array.loc[band, _start_date:_end_date].values for band in _bands]
 
         computed_data = compute(*[item for sublist in tasks for item in sublist])
 
-    
         _data = np.array([computed_data[i:i+len(_timeline)] for i in range(0, len(computed_data), len(_timeline))])
         
+        del computed_data
 
         bandas = _bands.copy()
+
         if _formulas:
             # Calcule os valores das bandas e armazene em band_values
-            band_values = {band: _data[idx] for idx, band in enumerate(_bands)}
-            
             for formula in _formulas:
+                filter_bands = self._extract_bands([formula])
+
+                band_values = {band: _data[idx] for idx, band in enumerate(_bands) if band in filter_bands}
                 try:
                     # Calculate the index value directly from the band_values dictionary
                     index_value = eval(formula, {}, band_values)

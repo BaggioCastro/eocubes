@@ -71,6 +71,7 @@ class Image():
         self.item = item
         self.bands = bands
         self.bbox = bbox
+        self.tile = item.properties['bdc:tiles'][0]
 
     def listBands(self):
         """Get a list with available bands commom name."""
@@ -91,19 +92,24 @@ class Image():
          - ValueError: If the resquested key not exists.
 
         """
-            # Check Authorization
-        _ = Utils.safe_request(self.item.assets[band_name].href, method='head')
 
-        source_crs = 4326
-        if crs:
-            source_crs = CRS.from_string(crs)
+        if self.bbox:
+                # Check Authorization
+            _ = Utils.safe_request(self.item.assets[band_name].href, method='head')
 
-        with rasterio.open(self.item.assets[band_name].href) as dataset:
-            if self.bbox:
+            source_crs = 4326
+            if crs:
+                source_crs = CRS.from_string(crs)
+
+            with rasterio.open(self.item.assets[band_name].href) as dataset:
                 new_bbox = Utils.reproj_bbox(self.bbox,source_crs)
                 window = from_bounds(*new_bbox, dataset.transform)
 
-            asset = dataset.read(1, window=window)
+                asset = dataset.read(1, window=window)
+        else:
+            with rasterio.open(self.item.assets[band_name].href) as dataset:
+                asset = dataset.read(1)
+
             
     
         return asset
