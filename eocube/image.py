@@ -7,8 +7,8 @@ This abstraction uses STAC.py library provided by BDC Project.
 =======================================
 begin                : 2021-05-01
 git sha              : $Format:%H$
-copyright            : (C) 2020 by none
-email                : none@inpe.br
+copyright            : (C) 2024 by none
+email                : baggio.silva@inpe.br
 =======================================
 
 This program is free software.
@@ -61,7 +61,7 @@ class Image():
         self.spectral = Spectral()
         self.time = datetime.datetime.strptime(
             item.properties['datetime'],
-            '%Y-%m-%dT%H:%M:%S'
+            '%Y-%m-%dT%H:%M:%S.%fZ'
         )
         self.item = item
         self.bands = bands

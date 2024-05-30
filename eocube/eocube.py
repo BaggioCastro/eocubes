@@ -7,7 +7,7 @@ This abstraction uses STAC.py library provided by BDC Project.
 =======================================
 begin                : 2021-05-01
 git sha              : $Format:%H$
-copyright            : (C) 2020 by none
+copyright            : (C) 2024 by none
 email                : baggio.silva@inpe.br
 =======================================
 
@@ -145,7 +145,7 @@ class DataCube:
 
         if items:
             for item in items[0]:
-                available_bands = sorted([band['name'] for band in item.properties.get('eo:bands', [])])
+                available_bands = sorted([band for band in list(item.assets.keys())])
                 bands_to_query = [band for band in available_bands if band in bands_to_query_set]
              
                 if all(band in available_bands for band in bands_to_query_set):
@@ -264,14 +264,14 @@ class DataCube:
             index_values = []
             for formula in _formulas:
                 try:
-                    index_value = eval(formula, band_values)
-                    index_values.append(index_value)
+                    index_value = eval(formula,{},band_values)
+                    index_values.append(np.squeeze(index_value))
                 except NameError as e:
                     print(f"Error: {e}. Please check the input bands and formulas.")
                     return None
             
             # Combine os índices calculados ao array de dados original
-            index_data = np.stack(index_values, axis=0)
+            index_data = np.stack(index_values, axis=0).astype("int16")
             _data = np.concatenate((_data, index_data), axis=0)
             bandas.extend([_formulas[i] for i in range(len(_formulas))])
 
@@ -344,7 +344,7 @@ class DataCube:
         index_values = []
         for formula in formulas:
             try:
-                index_value = eval(formula, {}, band_values)
+                index_value = eval(formula, {}, band_values)* 10000
                 mask = (-1 <= index_value) & (index_value <= 1)
                 index_value = np.where(mask, index_value * 10000, index_value)
             except NameError as e:
