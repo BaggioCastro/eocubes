@@ -123,10 +123,17 @@ class DataCube:
         del self.data_array
 
     def __str__(self):
-        return self.final_array.coords
+        # Cria uma descrição textual das coordenadas para impressão legível
+        coord_descriptions = []
+        for name, coord in self.final_array.coords.items():
+            coord_info = f"{name}: {coord.values}"
+            coord_descriptions.append(coord_info)
+        return "\n".join(coord_descriptions)
 
     def __repr__(self):
-        return self.__str__()   
+        # A representação é normalmente mais precisa e usada para desenvolvimento
+        # Aqui, escolhemos fazê-la igual a __str__ para simplicidade
+        return self.__str__()
 
 
     def _initialize_stac_client(self):
