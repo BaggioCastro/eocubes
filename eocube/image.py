@@ -59,10 +59,15 @@ class Image():
         """Build the Image Object for collected items from STAC."""
         self.utils = Utils()
         self.spectral = Spectral()
-        self.time = datetime.datetime.strptime(
-            item.properties['datetime'],
-            '%Y-%m-%dT%H:%M:%S.%fZ'
-        )
+        try:
+            self.time = datetime.datetime.strptime(
+                item.properties['datetime'],
+                  '%Y-%m-%dT%H:%M:%S.%fZ')
+        except ValueError:
+            self.time = datetime.datetime.strptime(
+                item.properties['datetime'],
+                  '%Y-%m-%dT%H:%M:%S')
+        
         self.item = item
         self.bands = bands
         self.bbox = bbox
