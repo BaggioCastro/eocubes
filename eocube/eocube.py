@@ -226,7 +226,7 @@ class DataCube:
         _date = datetime.datetime.utcfromtimestamp(_date.tolist() / 1e9)
         return _date
 
-    def search(self, 
+     def search(self, 
                start_date: Optional[str] = None, end_date: Optional[str] = None,
                as_time_series: bool = False):
         """Search method to retrieve data from delayed dataset and return all dataset for black searches but takes longer.
@@ -247,31 +247,13 @@ class DataCube:
         _timeline = self.timeline
         _formulas = self.formulas
 
-        # tasks = [self.data_array.loc[band, _start_date:_end_date].values for band in _bands]
+        tasks = [self.data_array.loc[band, _start_date:_end_date].values for band in _bands]
 
-        # computed_data = compute(*[item for sublist in tasks for item in sublist])
+        computed_data = compute(*[item for sublist in tasks for item in sublist])
 
     
-        # _data = np.array([computed_data[i:i+len(_timeline)] for i in range(0, len(computed_data), len(_timeline))])
+        _data = np.array([computed_data[i:i+len(_timeline)] for i in range(0, len(computed_data), len(_timeline))])
         
-        _data = np.array([
-            compute(*[
-                item 
-                for sublist in [
-                    self.data_array.loc[band, _start_date:_end_date].values 
-                    for band in _bands
-                ] 
-                for item in sublist
-            ])[i:i+len(_timeline)] 
-            for i in range(0, len(compute(*[
-                item 
-                for sublist in [
-                    self.data_array.loc[band, _start_date:_end_date].values 
-                    for band in _bands
-                ] 
-                for item in sublist
-            ])), len(_timeline))
-            ])
 
         bandas = _bands.copy()
         if _formulas:
@@ -283,13 +265,13 @@ class DataCube:
                     # Calculate the index value directly from the band_values dictionary
                     index_value = eval(formula, {}, band_values)
                     _data = np.concatenate((_data, np.expand_dims(np.squeeze(index_value).astype("int16"), axis=0)), axis=0)
-                    _bands.append(formula)
+                    bandas.append(formula)
                 except NameError as e:
                     print(f"Error: {e}. Please check the input bands and formulas.")
                     return None
 
         if as_time_series:
-            result = self.cube_to_time_series(_data, _bands, _timeline)
+            result = self.cube_to_time_series(_data, bandas, _timeline)
         else:
             result = xr.DataArray(
                 _data,
@@ -463,7 +445,7 @@ class DataCube:
 
 
     def interactPlot(self, method: str):
-        #todo fazer receber qualquer composição e retornar um tif com um mosaico
+        #todo fazer receber qualquer composição e retornar um tif com um mos
         """Return all dataset with a interactive plot date time slider.
 
         Parameters:
