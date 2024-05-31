@@ -28,7 +28,8 @@ from typing import List, Tuple, Dict, Optional
 from dask import delayed, compute
 from ipywidgets import interact
 import re
-from dask.distributed import Client
+from IPython.core.display import display, HTML
+import ipywidgets as widgets
 
 
 from eocube import config
@@ -79,7 +80,7 @@ class DataCube:
     # result = xr.concat([result1, result2], dim='y')
 
     def __init__(self, collections: List[str], query_bands: List[str], 
-                 start_date: str, end_date: str, limit: int = 30, window: bool = False, tiles: List[str] = None,bbox: Tuple[float, float, float, float] = None,formulas: List[str] = None ):
+                 start_date: str, end_date: str, limit: int = 30, tiles: List[str] = None,bbox: Tuple[float, float, float, float] = None,formulas: List[str] = None ):
         check_that(collections, msg="Please insert a list of available collections!")
         check_that(query_bands, msg="Please insert a list of available bands with query_bands!")
         #check_that(bbox, msg="Please insert a bounding box parameter!")
@@ -106,34 +107,76 @@ class DataCube:
 
         items = self._search_stac(limit)
         self.xr_arrays = []
+        self.n_tiles = []
         for item in items:
             images,bands_to_query = self._create_images_from_items(item)
             self.query_bands = bands_to_query
-
             if not images:
                 raise ValueError("No data cube created!")
 
-            if window:
-                self.data_images, self.data_array = self._build_data_array_window(images)
-            else:
-                self.data_images, self.data_array = self._build_data_array(images)
-
+            self.data_images, self.data_array = self._build_data_array(images)
+            self.n_tiles.append(self.tiles)
             self.xr_arrays.append(self.data_array)
         self.final_array = xr.concat(self.xr_arrays, dim = "tile")
         del self.data_array
 
     def __str__(self):
-        # Cria uma descrição textual das coordenadas para impressão legível
-        coord_descriptions = []
-        for name, coord in self.final_array.coords.items():
-            coord_info = f"{name}: {coord.values}"
-            coord_descriptions.append(coord_info)
-        return "\n".join(coord_descriptions)
+        collections_str = ', '.join(self.collections)
+        query_bands_str = ', '.join(self.query_bands)
+        formulas_str = '<br>'.join(
+            f"<div style='border:1px solid #666; background-color: #f9f9f9; padding: 10px; margin: 5px; border-radius: 5px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);'>{formula}</div>"
+            for formula in self.formulas
+        ) if self.formulas else "No forumula specified"
+        tiles_str = ', '.join(self.n_tiles) if self.n_tiles else "No tiles specified"
+        bbox_str = str(self.bbox) if self.bbox else "No bounding box specified"
 
-    def __repr__(self):
-        # A representação é normalmente mais precisa e usada para desenvolvimento
-        # Aqui, escolhemos fazê-la igual a __str__ para simplicidade
-        return self.__str__()
+        html = f"""
+        <style>
+            .datacube-table {{
+                width: 80%;  /* Reduz a largura da tabela para 80% da largura do container */
+                max-width: 800px;  /* Define uma largura máxima para evitar tabelas excessivamente grandes */
+                margin-left: auto;
+                margin-right: auto;  /* Centraliza a tabela horizontalmente */
+                border-collapse: collapse;
+            }}
+            .datacube-table th, .datacube-table td {{
+                padding: 8px;
+                border: 1px solid #ddd;
+                text-align: left;
+            }}
+            .datacube-table th {{
+                background-color: #f4f4f4;
+            }}
+        </style>
+        <table class="datacube-table">
+            <tr><th>Attribute</th><th>Value</th></tr>
+            <tr><td><b>Collections</b></td><td>{collections_str}</td></tr>
+            <tr><td><b>Query Bands</b></td><td>{query_bands_str}</td></tr>
+            <tr><td><b>Formulas</b></td><td>{formulas_str}</td></tr>
+            <tr><td><b>Bounding Box</b></td><td>{bbox_str}</td></tr>
+            <tr><td><b>Date Range</b></td><td>{self.start_date} to {self.end_date}</td></tr>
+            <tr><td><b>Tiles</b></td><td>{tiles_str}</td></tr>
+        </table>
+        """
+        return html
+
+
+    def display(self):
+        display(HTML(self.__str__()))
+        # Criando a interação para a timeline
+        count_label = widgets.Label(value=f"Number of dates in timeline: {len(self.timeline)}")
+        display(count_label)
+        timeline_widget = widgets.SelectMultiple(
+            options=self.timeline,
+            value=[self.timeline[0]],
+            description='Timeline:',
+            disabled=False
+        )
+        display(timeline_widget)
+
+    def display_summary(self):
+        # Display the HTML summary
+        display(HTML(self.__str__()))
 
 
     def _initialize_stac_client(self):
@@ -234,39 +277,7 @@ class DataCube:
             dims=["band", "time"],
             name="DataCube"
         )
-    
-    def _build_data_array_window(self, images):
-        x_data = {}
-        for image in images:
-            date = image.time
-            self.data_images[date] = image
-            x_data[date] = []
-            for band in self.query_bands:
-                data = delayed(image.getWindow)(band)
-                x_data[date].append({str(band): data})
 
-        self.timeline = sorted(list(x_data.keys()))
-         
-
-        data_timeline = {}
-        for i in range(len(self.query_bands)):
-            data_timeline[self.query_bands[i]] = []
-            for time in self.timeline:
-                data_timeline[self.query_bands[i]].append(x_data[time][i][self.query_bands[i]])
-
-        time_series = []
-        for band in self.query_bands:
-            time_series.append(data_timeline[band])
-
-        d_array = xr.DataArray(
-            np.array(time_series),
-            coords=[self.query_bands, self.timeline],
-            dims=["band", "time"],
-            name="DataCube"
-        )
-        
-        d_array.coords['tile'] = image.time
-        return self.data_images, d_array
 
     def _get_collections_description(self):
         description = {}
@@ -367,78 +378,7 @@ class DataCube:
 
         return combined_ts_data
     
-    def calculate_indices(self, cube, input_bands, formulas):
-        """
-        Calculates the desired spectral indices from the input data matrix using the given formulas.
 
-        Parameters:
-        -----------
-        cube : xarray.DataArray
-            The input data cube.
-        input_bands : list of str
-            The list of band names to be used for calculating the indices.
-        formulas : list of str
-            The list of formulas to be used for calculating the indices.
-
-        Returns:
-        --------
-        cube : xarray.DataArray
-            The updated data cube with the calculated indices.
-        """
-        if not isinstance(cube, xr.DataArray):
-            raise ValueError("cube must be an xarray.DataArray")
-
-        # Check for missing bands and download if necessary
-        missing_bands = [band for band in input_bands if band not in cube.coords["band"].values]
-        if missing_bands:
-            self._download_missing_bands(missing_bands)
-
-        # Calculate band values for the input matrix
-        band_values = {band: cube.sel(band=band).values for band in input_bands}
-
-        # Calculate the desired indices using the formulas
-        index_values = []
-        for formula in formulas:
-            try:
-                index_value = eval(formula, {}, band_values)* 10000
-                mask = (-1 <= index_value) & (index_value <= 1)
-                index_value = np.where(mask, index_value * 10000, index_value)
-            except NameError as e:
-                print(f"Error: {e}. Please check the input bands and formulas.")
-                return None
-            index_values.append(index_value)
-
-        # Combine the results into a final array
-        final_result = np.stack(index_values, axis=0).astype('int16')
-
-        # Create a new DataArray for the indices
-        if "pixel" in cube.coords:
-            indices_data_array = xr.DataArray(
-                final_result,
-                coords={"band": [f"index_{i}" for i in range(len(formulas))], "time": cube.coords["time"], "pixel": cube.coords["pixel"]},
-                dims=["band", "time", "pixel"],
-                name="SpectralIndices"
-            )
-        else:
-            indices_data_array = xr.DataArray(
-                final_result,
-                coords={"band": [f"index_{i}" for i in range(len(formulas))], "time": cube.coords["time"], "y": cube.coords["y"], "x": cube.coords["x"]},
-                dims=["band", "time", "y", "x"],
-                name="SpectralIndices"
-            )
-
-        # Append indices to the original cube
-        cube = xr.concat([cube, indices_data_array], dim="band")
-
-        # Update description
-        if "description" in cube.attrs:
-            cube.attrs["description"] += " + Spectral Indices"
-        else:
-            cube.attrs["description"] = "Spectral Indices"
-
-        return cube
-
-    
     def getTimeSeries(self, band: str, lon: float, lat: float, start_date: Optional[str] = None, end_date: Optional[str] = None):
         """Get time series band values from a given point and timeline.
 
