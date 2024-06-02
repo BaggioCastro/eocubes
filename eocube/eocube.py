@@ -30,6 +30,7 @@ from ipywidgets import interact
 import re
 from IPython.core.display import display, HTML
 import ipywidgets as widgets
+from dask.diagnostics import ProgressBar
 
 
 from eocube import config
@@ -318,8 +319,8 @@ class DataCube:
             self.data_array = self.final_array.isel(tile = 0)
 
         tasks = [self.data_array.loc[band, _start_date:_end_date].values for band in _bands]
-
-        computed_data = compute(*[item for sublist in tasks for item in sublist])
+        with ProgressBar():
+            computed_data = compute(*[item for sublist in tasks for item in sublist])
 
         _data = np.array([computed_data[i:i+len(_timeline)] for i in range(0, len(computed_data), len(_timeline))])
         
