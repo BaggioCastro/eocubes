@@ -98,8 +98,12 @@ class DataCube:
         self.tiles = tiles
 
         self.stac_client = self._initialize_stac_client()
-        self.stac_client.add_conforms_to("ITEM_SEARCH")
-        self.stac_client.add_conforms_to("QUERY")
+        try:
+            self.stac_client.add_conforms_to("ITEM_SEARCH")
+            self.stac_client.add_conforms_to("QUERY")
+        except:
+            pass
+
         self.timeline = []
         self.data_images = {}
         self.data_array = None
