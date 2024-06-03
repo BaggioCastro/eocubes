@@ -220,7 +220,10 @@ class DataCube:
                 raise ValueError("Either 'bbox' or 'tiles' must be specified for searching.")
             
             # Processa os resultados da busca
-            items = list(item_search.items())
+            try:
+                items = list(item_search.items())
+            except:
+                items = list(item_search.get_items())
             pattern = re.compile(r"_(\d{6})_\d{8}$")
             unique_tiles = sorted({pattern.findall(item.id)[0] for item in items if pattern.findall(item.id)})
             return [[item for item in items if tile in item.id] for tile in unique_tiles]
