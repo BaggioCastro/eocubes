@@ -81,7 +81,7 @@ class DataCube:
     # result = xr.concat([result1, result2], dim='y')
 
     def __init__(self, collections: List[str], query_bands: List[str], 
-                 start_date: str, end_date: str, limit: int = 30, tiles: List[str] = None,bbox: Tuple[float, float, float, float] = None,formulas: List[str] = None ):
+                 start_date: str, end_date: str, limit: int = 100, tiles: List[str] = None,bbox: Tuple[float, float, float, float] = None,formulas: List[str] = None ):
         check_that(collections, msg="Please insert a list of available collections!")
         check_that(query_bands, msg="Please insert a list of available bands with query_bands!")
         #check_that(bbox, msg="Please insert a bounding box parameter!")
@@ -220,7 +220,10 @@ class DataCube:
                 raise ValueError("Either 'bbox' or 'tiles' must be specified for searching.")
             
             # Processa os resultados da busca
-            items = list(item_search.items())
+            try:
+                items = list(item_search.items())
+            except:
+                items = list(item_search.get_items())
             pattern = re.compile(r"_(\d{6})_\d{8}$")
             unique_tiles = sorted({pattern.findall(item.id)[0] for item in items if pattern.findall(item.id)})
             return [[item for item in items if tile in item.id] for tile in unique_tiles]
